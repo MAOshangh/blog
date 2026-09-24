@@ -6,56 +6,143 @@
 <title>Wink 的知识博客</title>
 <style>
   :root {
-    --bg: #f7f7f5;
+    --bg: #f6f7f5;
     --card: #ffffff;
     --ink: #1c1c1a;
     --muted: #6b6b66;
     --accent: #0f766e;
+    --accent-soft: #e6f2f0;
     --border: #e4e4df;
+    --shadow: 0 2px 10px rgba(20, 40, 30, .05);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: var(--bg); color: var(--ink); line-height: 1.6;
+    background: var(--bg); color: var(--ink); line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 860px; margin: 0 auto; padding: 40px 20px 80px; }
-  header.site { margin-bottom: 28px; }
-  header.site h1 { font-size: 28px; font-weight: 700; }
-  header.site .sub { color: var(--muted); font-size: 14px; margin-top: 6px; }
-  .stats {
-    display: inline-block; background: var(--accent); color: #fff;
-    border-radius: 999px; padding: 3px 14px; font-size: 13px; margin-left: 10px;
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px 80px; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #0f766e 0%, #115e59 60%, #134e4a 100%);
+    color: #fff; border-radius: 0 0 24px 24px;
+    padding: 44px 24px 36px; text-align: center; margin: 0 -20px 30px;
   }
+  .hero h1 { font-size: 30px; font-weight: 700; letter-spacing: .5px; }
+  .hero .sub { font-size: 14px; opacity: .85; margin-top: 8px; }
+  .hero .badge {
+    display: inline-block; background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.25); border-radius: 999px;
+    padding: 3px 14px; font-size: 13px; margin-top: 14px;
+  }
+
+  /* Toolbar */
+  .toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .search-box {
+    width: 100%; padding: 11px 16px; font-size: 14px;
+    border: 1px solid var(--border); border-radius: 10px; background: var(--card);
+    outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  .search-box:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(15,118,110,.12); }
+  .tags-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag-chip {
+    border: 1px solid var(--border); background: var(--card); color: var(--muted);
+    border-radius: 999px; padding: 4px 14px; font-size: 13px; cursor: pointer;
+    transition: all .15s; user-select: none;
+  }
+  .tag-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .tag-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Posts */
   .posts { display: flex; flex-direction: column; gap: 14px; }
   a.post {
     display: block; background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit;
-    transition: border-color .15s, box-shadow .15s;
+    border-radius: 14px; padding: 20px 22px; text-decoration: none; color: inherit;
+    box-shadow: var(--shadow); transition: border-color .15s, transform .15s, box-shadow .15s;
   }
-  a.post:hover { border-color: var(--accent); box-shadow: 0 4px 14px rgba(15, 118, 110, .08); }
+  a.post:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(15,118,110,.10); }
   .p-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
   .p-head h2 { font-size: 18px; font-weight: 600; }
   .p-head .date { color: var(--muted); font-size: 13px; white-space: nowrap; }
-  .summary { color: var(--muted); font-size: 14px; margin-top: 8px; }
-  .tags { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
-  .tag {
-    background: #eef4f3; color: #0f766e; font-size: 12px;
-    border-radius: 6px; padding: 2px 9px;
-  }
-  .empty { background: var(--card); border: 1px dashed var(--border); border-radius: 12px; padding: 48px 20px; text-align: center; color: var(--muted); }
-  footer.site { margin-top: 40px; color: var(--muted); font-size: 13px; text-align: center; }
+  .summary { color: var(--muted); font-size: 14px; margin-top: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .tags { margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { background: var(--accent-soft); color: var(--accent); font-size: 12px; border-radius: 6px; padding: 2px 9px; }
+
+  .empty, .none { background: var(--card); border: 1px dashed var(--border); border-radius: 14px; padding: 40px 20px; text-align: center; color: var(--muted); font-size: 14px; }
+
+  footer.site { margin-top: 48px; color: var(--muted); font-size: 13px; text-align: center; }
+  footer.site a { color: var(--accent); text-decoration: none; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="site">
-    <h1>Wink 的知识博客<span class="stats">1 篇</span></h1>
-    <div class="sub">个人知识博客 · 最近更新 2026-09-24 11:46</div>
+  <header class="hero">
+    <h1>Wink 的知识博客</h1>
+    <div class="sub">记录学习与实践 · 由 AI 辅助整理的每日知识沉淀</div>
+    <div class="badge">共 1 篇文章 · 最近更新 2026-09-24 13:39</div>
   </header>
-  <div class="posts">
-    <a class="post" href="posts/agentscope_learning/learning-guide-2026-09-23.html"><div class="p-head"><h2>AgentScope 学习路径 · 从入门到精通</h2><span class="date">2026-09-23</span></div><p class="summary">🎯 学习目标：从零掌握 AgentScope 多智能体框架：能独立搭建、运行并扩展多智能体应用</p><div class="tags"><span class="tag">教程</span><span class="tag">多智能体</span></div></a>
+
+  <div class="toolbar">
+    <input class="search-box" id="search" type="text" placeholder="搜索文章标题、摘要或标签…">
+    <div class="tags-bar" id="tagbar"></div>
   </div>
-  <footer class="site">由 blog-publisher 技能自动维护</footer>
+
+  <div class="posts" id="posts"></div>
+
+  <footer class="site">由 <a href="https://github.com/MAOshangh/blog">blog-publisher</a> 技能自动维护</footer>
 </div>
+
+<script>
+  const DATA = [{"title": "AgentScope 学习路径 · 从入门到精通", "date": "2026-09-23", "tags": ["教程", "多智能体"], "summary": "🎯 学习目标：从零掌握 AgentScope 多智能体框架：能独立搭建、运行并扩展多智能体应用", "url": "posts/agentscope_learning/learning-guide-2026-09-23.html"}];
+  const state = { q: "", tag: "" };
+
+  function collectTags() {
+    const set = new Set();
+    DATA.forEach(p => (p.tags || []).forEach(t => set.add(t)));
+    return [...set].sort((a, b) => a.localeCompare(b, "zh"));
+  }
+
+  function renderTags() {
+    const bar = document.getElementById("tagbar");
+    const tags = collectTags();
+    if (!tags.length) { bar.innerHTML = ""; return; }
+    bar.innerHTML = tags.map(t =>
+      `<span class="tag-chip${state.tag === t ? " active" : ""}" data-tag="${t}">${t}</span>`
+    ).join("");
+    bar.querySelectorAll(".tag-chip").forEach(el => {
+      el.addEventListener("click", () => {
+        state.tag = state.tag === el.dataset.tag ? "" : el.dataset.tag;
+        renderTags(); renderPosts();
+      });
+    });
+  }
+
+  function esc(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function renderPosts() {
+    const q = state.q.trim().toLowerCase();
+    const list = DATA.filter(p => {
+      const hay = (p.title + " " + (p.summary || "") + " " + (p.tags || []).join(" ")).toLowerCase();
+      const hitQ = !q || hay.includes(q);
+      const hitTag = !state.tag || (p.tags || []).includes(state.tag);
+      return hitQ && hitTag;
+    });
+    const box = document.getElementById("posts");
+    if (!list.length) {
+      box.innerHTML = `<div class="none">没有找到匹配的文章${q || state.tag ? "，换个关键词或标签试试" : ""}</div>`;
+      return;
+    }
+    box.innerHTML = list.map(p => {
+      const tags = (p.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join("");
+      return `<a class="post" href="${esc(p.url)}"><div class="p-head"><h2>${esc(p.title)}</h2><span class="date">${esc(p.date)}</span></div><p class="summary">${esc(p.summary)}</p><div class="tags">${tags}</div></a>`;
+    }).join("");
+  }
+
+  document.getElementById("search").addEventListener("input", e => { state.q = e.target.value; renderPosts(); });
+  renderTags(); renderPosts();
+</script>
 </body>
 </html>
