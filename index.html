@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wink 的知识博客</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --card: #ffffff;
+    --ink: #1c1c1a;
+    --muted: #6b6b66;
+    --accent: #0f766e;
+    --border: #e4e4df;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg); color: var(--ink); line-height: 1.6;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 40px 20px 80px; }
+  header.site { margin-bottom: 28px; }
+  header.site h1 { font-size: 28px; font-weight: 700; }
+  header.site .sub { color: var(--muted); font-size: 14px; margin-top: 6px; }
+  .stats {
+    display: inline-block; background: var(--accent); color: #fff;
+    border-radius: 999px; padding: 3px 14px; font-size: 13px; margin-left: 10px;
+  }
+  .posts { display: flex; flex-direction: column; gap: 14px; }
+  a.post {
+    display: block; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px 20px; text-decoration: none; color: inherit;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  a.post:hover { border-color: var(--accent); box-shadow: 0 4px 14px rgba(15, 118, 110, .08); }
+  .p-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .p-head h2 { font-size: 18px; font-weight: 600; }
+  .p-head .date { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .summary { color: var(--muted); font-size: 14px; margin-top: 8px; }
+  .tags { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    background: #eef4f3; color: #0f766e; font-size: 12px;
+    border-radius: 6px; padding: 2px 9px;
+  }
+  .empty { background: var(--card); border: 1px dashed var(--border); border-radius: 12px; padding: 48px 20px; text-align: center; color: var(--muted); }
+  footer.site { margin-top: 40px; color: var(--muted); font-size: 13px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="site">
+    <h1>Wink 的知识博客<span class="stats">1 篇</span></h1>
+    <div class="sub">个人知识博客 · 最近更新 2026-09-24 11:46</div>
+  </header>
+  <div class="posts">
+    <a class="post" href="posts/agentscope_learning/learning-guide-2026-09-23.html"><div class="p-head"><h2>AgentScope 学习路径 · 从入门到精通</h2><span class="date">2026-09-23</span></div><p class="summary">🎯 学习目标：从零掌握 AgentScope 多智能体框架：能独立搭建、运行并扩展多智能体应用</p><div class="tags"><span class="tag">教程</span><span class="tag">多智能体</span></div></a>
+  </div>
+  <footer class="site">由 blog-publisher 技能自动维护</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L3 动手实践：搭建完整协作应用 · AgentScope</title>
+<style>
+/* knowledge-learning-path 共享样式 */
+:root { --ink:#1f2937; --sub:#6b7280; --line:#e5e7eb; --bg:#f9fafb; --acc:#0f766e; --acc2:#0369a1; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif; color:var(--ink); background:var(--bg); line-height:1.75; }
+.wrap { max-width:960px; margin:0 auto; padding:32px 20px 64px; }
+header { border-bottom:2px solid var(--line); padding-bottom:20px; margin-bottom:24px; }
+h1 { font-size:28px; margin:0 0 8px; }
+.goal { color:var(--acc); font-weight:600; margin:0 0 4px; }
+.meta { color:var(--sub); font-size:13px; }
+.stats { display:inline-block; margin-top:10px; padding:4px 12px; background:#eef2f2; border-radius:20px; color:var(--acc2); font-size:13px; }
+h2 { font-size:22px; margin:36px 0 12px; }
+.summary { color:var(--sub); }
+a { color:var(--acc2); text-decoration:none; }
+a:hover { text-decoration:underline; }
+/* 导航条 */
+.nav { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:0 0 20px; padding:10px 14px; background:#fff; border:1px solid var(--line); border-radius:10px; font-size:14px; }
+.nav a { font-weight:600; }
+.nav .spacer { color:var(--sub); }
+/* 知识地图 */
+.map-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+.map-item { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+.map-item b { display:block; color:var(--acc2); margin-bottom:4px; }
+.map-item span { font-size:13px; color:var(--sub); }
+/* 阶段导航卡片（总览页） */
+.phase-cards { display:grid; gap:12px; }
+.phase-card { display:block; background:#fff; border:1px solid var(--line); border-left:4px solid var(--acc); border-radius:10px; padding:14px 16px; color:var(--ink); }
+.phase-card:hover { border-color:var(--acc2); text-decoration:none; }
+.phase-card .pc-head { display:flex; align-items:center; gap:10px; }
+.phase-card .lvl { background:var(--acc); color:#fff; font-weight:700; font-size:13px; padding:4px 8px; border-radius:6px; }
+.phase-card h3 { margin:0; font-size:16px; }
+.phase-card .dur { margin-left:auto; color:var(--sub); font-size:12px; white-space:nowrap; }
+.phase-card p { margin:6px 0 0; font-size:13px; color:var(--sub); }
+/* 阶段页 */
+.phase-head { display:flex; align-items:flex-start; gap:12px; border-bottom:1px dashed var(--line); padding-bottom:12px; margin-bottom:16px; }
+.phase-head .lvl { flex-shrink:0; background:var(--acc); color:#fff; font-weight:700; font-size:14px; padding:6px 10px; border-radius:8px; }
+.phase-head h3 { margin:0; font-size:18px; }
+.phase-head .obj { margin:4px 0 0; color:var(--ink); }
+.phase-head .dur { margin-left:auto; flex-shrink:0; color:var(--sub); font-size:13px; white-space:nowrap; }
+/* lessons */
+.lesson { border:1px solid var(--line); border-radius:10px; margin:14px 0; padding:16px 18px; background:#fcfdfd; }
+.lesson h4 { margin:0 0 10px; font-size:16px; color:var(--acc2); }
+.lesson p { margin:0 0 10px; }
+.lesson p:last-child { margin-bottom:0; }
+pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow-x:auto; font-size:13px; line-height:1.6; margin:10px 0; }
+pre code { font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace; }
+.steps, .pitfalls, .points { margin:10px 0 0; padding:10px 14px; border-radius:8px; }
+.steps { background:#eff6ff; border-left:4px solid var(--acc2); }
+.steps b, .points b { color:var(--acc2); display:block; margin-bottom:4px; }
+.steps ol { margin:0; padding-left:20px; }
+.pitfalls { background:#fff7ed; border-left:4px solid #c2410c; }
+.pitfalls b { color:#9a3412; display:block; margin-bottom:4px; }
+.pitfalls ul { margin:0; padding-left:20px; }
+.points { background:#f0fdf4; border-left:4px solid #15803d; }
+.points ul { margin:0; padding-left:20px; }
+/* resources / practice / quiz */
+h4 { margin:16px 0 8px; font-size:15px; color:var(--acc2); }
+.res table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { background:#f3f4f6; }
+td:first-child { width:40%; }
+td:nth-child(2) { width:14%; }
+.tier { display:inline-block; font-size:11px; color:#fff; padding:1px 8px; border-radius:10px; margin-left:6px; vertical-align:middle; }
+.prac ol { margin:0; padding-left:20px; }
+.quiz ul { margin:0; padding-left:20px; }
+.tips { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 20px; }
+.tips ul { margin:0; padding-left:20px; }
+/* 前置知识检查 */
+.prereq { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:10px 0; }
+.pr-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.pr-head b { font-size:15px; }
+.nec { font-size:11px; color:#fff; padding:2px 10px; border-radius:10px; }
+.nec.must { background:#b45309; }
+.nec.should { background:#0369a1; }
+.pr-row { font-size:13px; color:var(--sub); margin-top:4px; }
+.pr-label { display:inline-block; min-width:72px; color:var(--acc2); font-weight:600; }
+/* 前置补学链接（总览卡片内） */
+.pr-guide { margin-top:8px; font-size:13px; }
+.pr-guide a { font-weight:600; }
+/* 前置补学链接区（阶段页顶部） */
+.prereq-links { background:#eff6ff; border:1px solid #bfdbfe; border-left:4px solid var(--acc2); border-radius:8px; padding:10px 14px; margin:0 0 16px; font-size:14px; }
+.prereq-links b { color:var(--acc2); display:block; margin-bottom:4px; }
+.prereq-links ul { margin:0; padding-left:20px; }
+.prereq-links li { margin:2px 0; }
+/* 阶段前置依赖提示 */
+.dep-hint { background:#fffbeb; border:1px solid #fcd34d; border-left:4px solid #d97706; border-radius:8px; padding:10px 14px; margin:0 0 16px; font-size:14px; }
+/* 术语表 */
+.glossary { width:100%; border-collapse:collapse; font-size:14px; margin:8px 0; }
+.glossary th, .glossary td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+.glossary .zh { color:var(--sub); font-size:12px; }
+/* 预期输出 */
+.expected { margin:0 0 10px; }
+.expected b { display:block; color:#15803d; font-size:13px; margin-bottom:4px; }
+.expected pre { background:#0f172a; color:#e2e8f0; border-radius:6px; padding:10px 14px; font-size:13px; overflow-x:auto; }
+/* 能力自检 */
+.checklist { background:#f0fdf4; border-left:4px solid #15803d; border-radius:8px; padding:10px 14px; margin:14px 0 0; }
+.checklist h4 { margin:0 0 6px; color:#15803d; }
+.checklist ul { margin:0; padding-left:20px; }
+/* 求助路径 */
+.help { background:#fff; border:1px dashed var(--line); border-radius:8px; padding:10px 14px; margin:16px 0 0; }
+.help h4 { margin:0 0 6px; color:var(--acc2); }
+.help ul { margin:0; padding-left:20px; }
+footer { margin-top:40px; color:var(--sub); font-size:12px; border-top:1px solid var(--line); padding-top:12px; }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <span><a href="L2-核心概念-多智能体协作与编排.html">← L2 核心概念：多智能体协作与编排</a></span>
+    <span><a href="../learning-guide-2026-09-23.html">← 回总览</a></span>
+    <span><a href="L4-进阶深化-记忆-工具与工程化.html">L4 进阶深化：记忆、工具与工程化 →</a></span>
+  </div>
+
+  <header>
+    <h1>L3 动手实践：搭建完整协作应用 · AgentScope</h1>
+    <p class="goal">🎯 学完你能做到：独立完成一个「策划-写作-评审」三 Agent 协作应用，掌握从设计到运行的完整流程</p>
+    <p class="meta">主题：AgentScope · 生成日期：2026-09-23 · 阶段文档 4/5 · 预计 预计 8~12 小时</p>
+    <span class="stats">3 个教学小节 · 4 个延伸资源 · 4 个官方来源</span>
+  </header>
+
+  <div class="dep-hint">📌 前置要求：需先完成 L2（掌握 MsgHub 与两种管道）。</div><div class="prereq-links"><b>📘 前置知识补学（随时可回看）</b><ul><li><a href="../prereq/python-基础-函数-类-async-await.html">Python 基础（函数、类、async/await）</a></li><li><a href="../prereq/大模型与-api-基础概念.html">大模型与 API 基础概念</a></li></ul></div>
+
+  <h2>教学内容</h2>
+  <div class="lesson"><h4>实战设计：从需求到 Agent 分工</h4><p>动手前先做设计。以「自动写一篇技术短文」为例，拆成三个职责单一的 Agent：策划（planner）接收主题，输出大纲与要点；写作（writer）拿到大纲扩写成完整文章；评审（reviewer）检查文章是否跑题、结构是否清晰，给出修改意见。</p><p>设计要点有三条。第一，每个 Agent 的 sys_prompt 只说自己的职责，不要越界——planner 不写正文、writer 不评审，职责单一才好测试。第二，消息里带上下游需要的上下文：writer 需要 planner 的大纲，所以用 Sequential 管道天然满足『上一步输出传给下一步』。第三，输出格式对齐：reviewer 需要能读懂 writer 的文章，写作 Agent 就要输出纯文本文章而不是无关的废话。</p><p>推荐流程：先用 L1、L2 学的 API 把三个 Agent 分别单独跑通（各自能完成自己的那一步），再组装成管道。分而治之，别一上来就写完整流水线——哪一步出问题都能立刻定位。</p><div class="steps"><b>操作步骤</b><ol><li>为每个角色写 sys_prompt，明确职责与输出预期（大纲/正文/评审意见）</li><li>分别单独创建并测试 planner / writer / reviewer 三个 Agent</li><li>确认单个 Agent 的输出格式满足下游需要（如 writer 能读懂大纲）</li><li>设计消息流转：主题 → planner 大纲 → writer 文章 → reviewer 意见</li></ol></div><div class="points"><b>要点</b><ul><li>先设计分工再写代码：每个 Agent 职责单一、输出明确</li><li>先单独跑通每个 Agent，再组装流水线，便于定位问题</li><li>下游 Agent 需要什么格式的输入，由上游 Agent 的输出决定</li></ul></div></div><div class="lesson"><h4>完整实现：三 Agent 协作流水线（可直接运行）</h4><p>把设计落成代码：三个 Agent 用同一个 create_agent 工厂创建（只改 name 和 sys_prompt），再用 sequential_pipeline 串联。这是本教程第一份『完整可运行』的项目级代码——它就是官方多智能体协作模式的真实写法，你把主题换成自己的，就能做出第一个自己的多智能体应用。</p><p>注意代码里三个细节：sys_prompt 明确写了『只输出……』，这是控制 Agent 行为的惯用手段；formatter 统一用 DashScopeMultiAgentFormatter，保证消息里带 name；最后一个 Agent（reviewer）的输出就是整个应用的最终结果。</p><p>跑通后做两个变化实验：一是换主题，二是加一个 Agent（比如校对员），体会『加角色 = 加一个 Agent + 加进 agents 列表』的扩展方式——这就是多智能体框架比单模型 API 强的地方：分工可插拔。</p><pre><code>import os
+import asyncio
+from agentscope.agent import ReActAgent
+from agentscope.formatter import DashScopeMultiAgentFormatter
+from agentscope.message import Msg
+from agentscope.model import DashScopeChatModel
+from agentscope.pipeline import sequential_pipeline
+
+
+def create_agent(name: str, role: str) -&gt; ReActAgent:
+    return ReActAgent(
+        name=name,
+        sys_prompt=role,
+        model=DashScopeChatModel(model_name=&quot;qwen-max&quot;, api_key=os.environ[&quot;DASHSCOPE_API_KEY&quot;]),
+        formatter=DashScopeMultiAgentFormatter(),
+    )
+
+
+async def main() -&gt; None:
+    planner = create_agent(
+        &quot;planner&quot;,
+        &quot;你是策划 Agent：把主题拆成 3-5 个要点的大纲，只输出大纲，不要写正文。&quot;,
+    )
+    writer = create_agent(
+        &quot;writer&quot;,
+        &quot;你是写作 Agent：根据大纲扩写成 200 字左右的短文，语言流畅，只输出文章。&quot;,
+    )
+    reviewer = create_agent(
+        &quot;reviewer&quot;,
+        &quot;你是评审 Agent：检查文章是否跑题、结构是否清晰，给出 1-3 条具体修改意见，只输出意见。&quot;,
+    )
+
+    result = await sequential_pipeline(
+        agents=[planner, writer, reviewer],
+        msg=Msg(&quot;user&quot;, &quot;写一篇介绍多智能体系统的短文&quot;, &quot;user&quot;),
+    )
+    print(&quot;最终输出（评审意见）:&quot;)
+    print(result.content)
+
+
+asyncio.run(main())</code></pre><div class="expected"><b>预期输出</b><pre>控制台依次出现三条流水线产物：planner 的大纲要点 → writer 的短文 → reviewer 的修改意见，最后打印『最终输出（评审意见）:』加上 review 内容</pre></div><div class="steps"><b>操作步骤</b><ol><li>保存为 content_pipeline.py 并运行，观察三段输出</li><li>把主题换成自己感兴趣的方向，重跑验证流水线可复用</li><li>新增一个校对 Agent（proofreader）并加入 agents 列表，体会扩展方式</li><li>把 reviewer 的意见作为提示词再喂给 writer 一轮，实现『写-评-改』循环</li></ol></div><div class="pitfalls"><b>常见坑</b><ul><li>某一步输出为空/答非所问：多半是 sys_prompt 没写『只输出什么』，下游收到脏数据</li><li>结果太长或太短：在 sys_prompt 里加字数约束（如『200 字左右』）</li><li>一次性写完整流水线再调：先单 Agent 验证，再串联，出错才找得到是哪一环</li><li>并发限流：如果加了并行环节报 429，改用 enable_gather=False 或降并发</li></ul></div><div class="points"><b>要点</b><ul><li>完整应用 = create_agent 工厂 + sequential_pipeline 串联，代码即模板</li><li>控制 Agent 输出靠 sys_prompt 的『只输出……』约束</li><li>扩展 = 加 Agent 并加入 agents 列表；『写-评-改』循环是评审型应用的基本盘</li></ul></div></div><div class="lesson"><h4>工程加固与调试：超时、日志、可视化</h4><p>demo 能跑只是第一步，真实使用要面对网络抖动、模型超时、参数错误。养成三个工程习惯：第一，模型调用设置合理的超时与重试策略，避免一次请求卡住整条流水线；第二，打开/记录日志，出问题时能看清每个 Agent 的输入输出与调用链；第三，用 stream_printing_messages 观察运行中的中间消息——它把 Agent 打印的消息转成异步生成器，让你实时看到『卡在哪一步、传了什么』。</p><p>调试多智能体系统的心法一句话：先定位到具体 Agent，再把它当单 Agent 调。协作层的问题（消息没传对、格式不对）和单 Agent 的问题（提示词不好、模型输出不稳定）分开排查，效率最高。</p><p>AgentScope 还有可视化工具 AgentScope Studio 可以观察多智能体运行过程，大项目调试必备；具体参数与界面以官方文档为准。记住：超时、日志、可视化是默认配置，不是出了问题才补。</p><pre><code>import os
+import asyncio
+from agentscope.agent import ReActAgent
+from agentscope.formatter import DashScopeMultiAgentFormatter
+from agentscope.message import Msg
+from agentscope.model import DashScopeChatModel
+from agentscope.pipeline import sequential_pipeline, stream_printing_messages
+
+
+def create_agent(name: str, role: str) -&gt; ReActAgent:
+    return ReActAgent(
+        name=name,
+        sys_prompt=role,
+        model=DashScopeChatModel(model_name=&quot;qwen-max&quot;, api_key=os.environ[&quot;DASHSCOPE_API_KEY&quot;]),
+        formatter=DashScopeMultiAgentFormatter(),
+    )
+
+
+async def main() -&gt; None:
+    planner = create_agent(&quot;planner&quot;, &quot;把主题拆成大纲，只输出大纲。&quot;)
+    writer = create_agent(&quot;writer&quot;, &quot;根据大纲写短文，只输出文章。&quot;)
+
+    # 关闭终端直接打印，改用流式观察，看清每一条中间消息
+    for a in (planner, writer):
+        a.set_console_output_enabled(False)
+
+    async for msg, last in stream_printing_messages(
+        agents=[planner, writer],
+        coroutine_task=sequential_pipeline(
+            agents=[planner, writer],
+            msg=Msg(&quot;user&quot;, &quot;介绍什么是 Agent&quot;, &quot;user&quot;),
+        ),
+    ):
+        print(f&quot;[{msg.name}] {msg.content}&quot;)
+        if last:
+            print(&quot;--- 本条消息结束 ---&quot;)
+
+
+asyncio.run(main())</code></pre><div class="expected"><b>预期输出</b><pre>按消息流实时打印：先是 planner 的输出（name=planner），再是 writer 的输出（name=writer），每条完整消息后跟一行分隔线；中间过程一览无余</pre></div><div class="steps"><b>操作步骤</b><ol><li>运行代码，对比与直接 print 最终结果的差异，体会流式观察的价值</li><li>在 writer 的 sys_prompt 里故意写一个矛盾要求，运行后从消息流定位问题在哪个 Agent</li><li>把 stream_printing_messages 换成普通调用，对比两种调试方式</li></ol></div><div class="pitfalls"><b>常见坑</b><ul><li>关闭了 console 输出但忘了用流式读取：会什么都看不到</li><li>流式消息过多：先观察，定位到问题 Agent 后再单 Agent 复现</li><li>把 stream_printing_messages 当成普通函数调用：它返回的是 async 生成器，必须 async for</li></ul></div><div class="points"><b>要点</b><ul><li>工程三习惯：超时重试、日志、可视化观察，都是默认配置而非补救</li><li>调试心法：先定位具体 Agent，再当单 Agent 调；协作问题与单 Agent 问题分开排查</li><li>stream_printing_messages 用 async for 消费，实时看中间消息</li></ul></div></div>
+
+  <div class="res"><h4>延伸阅读（资源）</h4><table><thead><tr><th>资源</th><th>类型</th><th>为什么看</th></tr></thead><tbody><tr><td><a href="https://doc.agentscope.io/tutorial/workflow_debate.html" target="_blank" rel="noopener">官方示例 · 多智能体应用</a> <span class="tier" style="background:#0369a1">官方</span></td><td>example</td><td>官方多智能体协作示例，参考其分工与消息流转设计</td></tr><tr><td><a href="https://doc.agentscope.io/tutorial/task_pipeline.html" target="_blank" rel="noopener">官方文档 · 管道进阶</a> <span class="tier" style="background:#0369a1">官方</span></td><td>tutorial</td><td>Sequential/Fanout 管道 + stream_printing_messages 的完整官方用法</td></tr><tr><td><a href="https://doc.agentscope.io/features/studio.html" target="_blank" rel="noopener">官方文档 · AgentScope Studio</a> <span class="tier" style="background:#0369a1">官方</span></td><td>docs</td><td>可视化调试工具，大项目必备</td></tr><tr><td><a href="https://doc.agentscope.io/faq/faq.html" target="_blank" rel="noopener">官方文档 · 工程实践与 FAQ</a> <span class="tier" style="background:#0369a1">官方</span></td><td>docs</td><td>常见错误与工程配置参考，遇到问题先查这里</td></tr></tbody></table></div>
+
+  <div class="prac"><h4>动手练习</h4><ol><li>实现『策划-写作-评审』三 Agent 协作流水线并跑通，换一个自己的主题</li><li>为流水线加入流式观察（stream_printing_messages），故意制造一处错误并用消息流定位</li><li>扩展应用：新增第 4 个 Agent（校对或配图建议），加入 agents 列表并调整顺序</li><li>写一篇 500 字的小短文记录你的设计、踩坑与调试过程</li></ol></div>
+
+  <div class="quiz"><h4>自测问题</h4><ul><li>为什么先单独跑通每个 Agent 再组装流水线？</li><li>在代码里，新增一个 Agent 最少要改哪几处？（写出具体改动）</li><li>stream_printing_messages 返回什么？用什么语法消费它？</li><li>如果 reviewer 反馈『文章跑题了』，你会先怀疑哪一环？怎么用消息流验证？</li><li>应用题：把『策划-写作-评审』改成『调研-写作-校对-发布』四 Agent 流程，pipeline 的 agents 列表怎么写？</li></ul></div>
+
+  <div class="checklist"><h4>能力自检（学完你能……）</h4><ul><li>能独立完成一个三 Agent 协作应用并跑通（不抄代码）</li><li>能用 stream_printing_messages 观察消息流并定位问题 Agent</li><li>能给应用新增一个 Agent 并调整管道顺序，不改动既有 Agent 的代码</li><li>能向别人讲清自己的应用：每个 Agent 负责什么、消息怎么流转</li></ul></div>
+
+  <div class="help"><h4>遇到问题怎么办</h4><ul><li>官方文档站（权威优先）：https://doc.agentscope.io/ —— 教程与 FAQ 页面覆盖绝大多数问题</li><li>GitHub Issues（报错求助）：https://github.com/agentscope-ai/agentscope/issues —— 搜关键词或开新 Issue，附完整报错</li><li>官方社区：GitHub Discussions https://github.com/agentscope-ai/agentscope/discussions 与官方 Discord 群</li><li>关键口诀：报错先看消息流定位到具体 Agent，再对照官方 pipeline 教程的代码逐行核对</li></ul></div>
+
+  <footer>由 knowledge-learning-path 技能生成 · 资源权威性标注：官方 = 官方文档/论文/官方示例，可靠 = 权威课程/维护者博客/技术媒体，社区 = 社区文章（供补充参考）</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L1 快速上手：跑通第一个 Agent · AgentScope</title>
+<style>
+/* knowledge-learning-path 共享样式 */
+:root { --ink:#1f2937; --sub:#6b7280; --line:#e5e7eb; --bg:#f9fafb; --acc:#0f766e; --acc2:#0369a1; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif; color:var(--ink); background:var(--bg); line-height:1.75; }
+.wrap { max-width:960px; margin:0 auto; padding:32px 20px 64px; }
+header { border-bottom:2px solid var(--line); padding-bottom:20px; margin-bottom:24px; }
+h1 { font-size:28px; margin:0 0 8px; }
+.goal { color:var(--acc); font-weight:600; margin:0 0 4px; }
+.meta { color:var(--sub); font-size:13px; }
+.stats { display:inline-block; margin-top:10px; padding:4px 12px; background:#eef2f2; border-radius:20px; color:var(--acc2); font-size:13px; }
+h2 { font-size:22px; margin:36px 0 12px; }
+.summary { color:var(--sub); }
+a { color:var(--acc2); text-decoration:none; }
+a:hover { text-decoration:underline; }
+/* 导航条 */
+.nav { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:0 0 20px; padding:10px 14px; background:#fff; border:1px solid var(--line); border-radius:10px; font-size:14px; }
+.nav a { font-weight:600; }
+.nav .spacer { color:var(--sub); }
+/* 知识地图 */
+.map-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+.map-item { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+.map-item b { display:block; color:var(--acc2); margin-bottom:4px; }
+.map-item span { font-size:13px; color:var(--sub); }
+/* 阶段导航卡片（总览页） */
+.phase-cards { display:grid; gap:12px; }
+.phase-card { display:block; background:#fff; border:1px solid var(--line); border-left:4px solid var(--acc); border-radius:10px; padding:14px 16px; color:var(--ink); }
+.phase-card:hover { border-color:var(--acc2); text-decoration:none; }
+.phase-card .pc-head { display:flex; align-items:center; gap:10px; }
+.phase-card .lvl { background:var(--acc); color:#fff; font-weight:700; font-size:13px; padding:4px 8px; border-radius:6px; }
+.phase-card h3 { margin:0; font-size:16px; }
+.phase-card .dur { margin-left:auto; color:var(--sub); font-size:12px; white-space:nowrap; }
+.phase-card p { margin:6px 0 0; font-size:13px; color:var(--sub); }
+/* 阶段页 */
+.phase-head { display:flex; align-items:flex-start; gap:12px; border-bottom:1px dashed var(--line); padding-bottom:12px; margin-bottom:16px; }
+.phase-head .lvl { flex-shrink:0; background:var(--acc); color:#fff; font-weight:700; font-size:14px; padding:6px 10px; border-radius:8px; }
+.phase-head h3 { margin:0; font-size:18px; }
+.phase-head .obj { margin:4px 0 0; color:var(--ink); }
+.phase-head .dur { margin-left:auto; flex-shrink:0; color:var(--sub); font-size:13px; white-space:nowrap; }
+/* lessons */
+.lesson { border:1px solid var(--line); border-radius:10px; margin:14px 0; padding:16px 18px; background:#fcfdfd; }
+.lesson h4 { margin:0 0 10px; font-size:16px; color:var(--acc2); }
+.lesson p { margin:0 0 10px; }
+.lesson p:last-child { margin-bottom:0; }
+pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow-x:auto; font-size:13px; line-height:1.6; margin:10px 0; }
+pre code { font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace; }
+.steps, .pitfalls, .points { margin:10px 0 0; padding:10px 14px; border-radius:8px; }
+.steps { background:#eff6ff; border-left:4px solid var(--acc2); }
+.steps b, .points b { color:var(--acc2); display:block; margin-bottom:4px; }
+.steps ol { margin:0; padding-left:20px; }
+.pitfalls { background:#fff7ed; border-left:4px solid #c2410c; }
+.pitfalls b { color:#9a3412; display:block; margin-bottom:4px; }
+.pitfalls ul { margin:0; padding-left:20px; }
+.points { background:#f0fdf4; border-left:4px solid #15803d; }
+.points ul { margin:0; padding-left:20px; }
+/* resources / practice / quiz */
+h4 { margin:16px 0 8px; font-size:15px; color:var(--acc2); }
+.res table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { background:#f3f4f6; }
+td:first-child { width:40%; }
+td:nth-child(2) { width:14%; }
+.tier { display:inline-block; font-size:11px; color:#fff; padding:1px 8px; border-radius:10px; margin-left:6px; vertical-align:middle; }
+.prac ol { margin:0; padding-left:20px; }
+.quiz ul { margin:0; padding-left:20px; }
+.tips { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 20px; }
+.tips ul { margin:0; padding-left:20px; }
+/* 前置知识检查 */
+.prereq { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:10px 0; }
+.pr-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.pr-head b { font-size:15px; }
+.nec { font-size:11px; color:#fff; padding:2px 10px; border-radius:10px; }
+.nec.must { background:#b45309; }
+.nec.should { background:#0369a1; }
+.pr-row { font-size:13px; color:var(--sub); margin-top:4px; }
+.pr-label { display:inline-block; min-width:72px; color:var(--acc2); font-weight:600; }
+/* 前置补学链接（总览卡片内） */
+.pr-guide { margin-top:8px; font-size:13px; }
+.pr-guide a { font-weight:600; }
+/* 前置补学链接区（阶段页顶部） */
+.prereq-links { background:#eff6ff; border:1px solid #bfdbfe; border-left:4px solid var(--acc2); border-radius:8px; padding:10px 14px; margin:0 0 16px; font-size:14px; }
+.prereq-links b { color:var(--acc2); display:block; margin-bottom:4px; }
+.prereq-links ul { margin:0; padding-left:20px; }
+.prereq-links li { margin:2px 0; }
+/* 阶段前置依赖提示 */
+.dep-hint { background:#fffbeb; border:1px solid #fcd34d; border-left:4px solid #d97706; border-radius:8px; padding:10px 14px; margin:0 0 16px; font-size:14px; }
+/* 术语表 */
+.glossary { width:100%; border-collapse:collapse; font-size:14px; margin:8px 0; }
+.glossary th, .glossary td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+.glossary .zh { color:var(--sub); font-size:12px; }
+/* 预期输出 */
+.expected { margin:0 0 10px; }
+.expected b { display:block; color:#15803d; font-size:13px; margin-bottom:4px; }
+.expected pre { background:#0f172a; color:#e2e8f0; border-radius:6px; padding:10px 14px; font-size:13px; overflow-x:auto; }
+/* 能力自检 */
+.checklist { background:#f0fdf4; border-left:4px solid #15803d; border-radius:8px; padding:10px 14px; margin:14px 0 0; }
+.checklist h4 { margin:0 0 6px; color:#15803d; }
+.checklist ul { margin:0; padding-left:20px; }
+/* 求助路径 */
+.help { background:#fff; border:1px dashed var(--line); border-radius:8px; padding:10px 14px; margin:16px 0 0; }
+.help h4 { margin:0 0 6px; color:var(--acc2); }
+.help ul { margin:0; padding-left:20px; }
+footer { margin-top:40px; color:var(--sub); font-size:12px; border-top:1px solid var(--line); padding-top:12px; }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <span><a href="L0-认识与准备.html">← L0 认识与准备</a></span>
+    <span><a href="../learning-guide-2026-09-23.html">← 回总览</a></span>
+    <span><a href="L2-核心概念-多智能体协作与编排.html">L2 核心概念：多智能体协作与编排 →</a></span>
+  </div>
+
+  <header>
+    <h1>L1 快速上手：跑通第一个 Agent · AgentScope</h1>
+    <p class="goal">🎯 学完你能做到：用官方 API 创建并运行第一个 ReActAgent，理解 Msg 消息与异步调用方式</p>
+    <p class="meta">主题：AgentScope · 生成日期：2026-09-23 · 阶段文档 2/5 · 预计 预计 2~3 小时</p>
+    <span class="stats">3 个教学小节 · 4 个延伸资源 · 3 个官方来源</span>
+  </header>
+
+  <div class="dep-hint">📌 前置要求：需先完成 L0（安装 + API Key 就绪）。</div><div class="prereq-links"><b>📘 前置知识补学（随时可回看）</b><ul><li><a href="../prereq/python-基础-函数-类-async-await.html">Python 基础（函数、类、async/await）</a></li><li><a href="../prereq/大模型与-api-基础概念.html">大模型与 API 基础概念</a></li></ul></div>
+
+  <h2>教学内容</h2>
+  <div class="lesson"><h4>创建第一个 Agent（官方写法）</h4><p>官方示例里创建 Agent 的标准写法是 ReActAgent + DashScopeChatModel + DashScopeMultiAgentFormatter。先看懂这三样东西：ReActAgent 是『会思考的智能体』（ReAct 即 Reasoning+Acting，先想再动）；DashScopeChatModel 是接入 qwen 模型的封装；formatter 决定对话历史怎么组织——多 Agent 场景必须用 DashScopeMultiAgentFormatter，它会把不同 Agent 的名字带进消息，让模型知道『谁在说话』。</p><p>下面这段代码是官方 pipeline 教程中创建 Agent 的原版写法（仅改了角色文案）。注意：Agent 的调用是异步的（async/await），这是 AgentScope 的惯例——模型调用是 IO 操作，异步能同时跑多个 Agent。</p><pre><code>import os
+import asyncio
+from agentscope.agent import ReActAgent
+from agentscope.formatter import DashScopeMultiAgentFormatter
+from agentscope.model import DashScopeChatModel
+
+
+def create_agent(name: str, sys_prompt: str) -&gt; ReActAgent:
+    &quot;&quot;&quot;按官方推荐方式创建一个 ReAct 智能体&quot;&quot;&quot;
+    return ReActAgent(
+        name=name,
+        sys_prompt=sys_prompt,
+        model=DashScopeChatModel(
+            model_name=&quot;qwen-max&quot;,
+            api_key=os.environ[&quot;DASHSCOPE_API_KEY&quot;],
+        ),
+        formatter=DashScopeMultiAgentFormatter(),
+    )
+
+
+async def main() -&gt; None:
+    agent = create_agent(
+        &quot;assistant&quot;,
+        &quot;You&#x27;re a helpful assistant. Reply in Chinese.&quot;,
+    )
+    # 直接向 Agent 发一条消息（字符串会被自动包装成 Msg）
+    reply = await agent(&quot;你好，请用一句话介绍什么是多智能体系统&quot;)
+    print(reply)
+
+
+asyncio.run(main())</code></pre><div class="expected"><b>预期输出</b><pre>终端打印一条 Msg 对象：name=&#x27;assistant&#x27;，content 里是模型回复『多智能体系统是……』的文本。如果看到 KeyError: DASHSCOPE_API_KEY，说明环境变量没配对（回 L0 检查）。</pre></div><div class="steps"><b>操作步骤</b><ol><li>把上方代码保存为 first_agent.py</li><li>确认 DASHSCOPE_API_KEY 环境变量已设置（L0 已验证）</li><li>运行 python first_agent.py，观察打印的 Msg</li><li>改 sys_prompt 里的角色描述，再跑一次，感受提示词对回答风格的影响</li></ol></div><div class="pitfalls"><b>常见坑</b><ul><li>报 ModuleNotFoundError: agentscope 相关模块：先确认安装成功且解释器一致</li><li>报 KeyError: DASHSCOPE_API_KEY：环境变量没设或没在新终端生效</li><li>忘记 await：调用 Agent 不加 await 会打印 coroutine 对象而不是结果</li><li>model_name 用错：qwen 系列用 qwen-max / qwen-plus 等官方模型名</li></ul></div><div class="points"><b>要点</b><ul><li>创建 Agent 三件套：ReActAgent + DashScopeChatModel + DashScopeMultiAgentFormatter</li><li>Agent 调用是异步的：await agent(消息) 才能拿到回复</li><li>api_key 一律从 os.environ 读，不要写死在代码里</li></ul></div></div><div class="lesson"><h4>理解消息 Msg：Agent 之间传什么</h4><p>刚才你传字符串给 agent，AgentScope 内部会把它包装成 Msg。Msg 是框架里所有通信的统一载体，理解它等于理解了框架的『语言』。</p><p>Msg 的核心字段：name（谁发的消息）、content（内容，可以是纯文本，也可以是结构化内容）、role（消息角色：user/assistant/system）。构造方式有两种等价写法：Msg(&quot;user&quot;, &quot;内容&quot;, &quot;user&quot;) 位置参数，或 Msg(name=&quot;user&quot;, content=&quot;内容&quot;, role=&quot;user&quot;) 关键字参数。</p><p>为什么 Agent 之间传东西要用 Msg 而不是直接传字符串？因为协作场景需要『带身份的消息』：writer 收到一条消息，必须知道它是 planner 发来的大纲还是 user 的原始需求；role 字段让模型能区分『这是系统指令还是用户输入』。Msg 还统一了消息历史记录，方便调试时回看每一步传递。</p><pre><code>from agentscope.message import Msg
+
+# 两种等价构造方式
+msg1 = Msg(&quot;user&quot;, &quot;帮我列三个学习 Python 的步骤&quot;, &quot;user&quot;)
+msg2 = Msg(name=&quot;user&quot;, content=&quot;帮我列三个学习 Python 的步骤&quot;, role=&quot;user&quot;)
+
+# 读取字段
+print(msg1.name)      # user
+print(msg1.content)   # 帮我列三个学习 Python 的步骤
+print(msg1.role)      # user</code></pre><div class="expected"><b>预期输出</b><pre>依次打印：user / 帮我列三个学习 Python 的步骤 / user</pre></div><div class="pitfalls"><b>常见坑</b><ul><li>把 content 误认为就是消息本身：调试时记住 name/content/role 三个字段都要看</li><li>位置参数顺序记错：Msg 的位置顺序是 (name, content, role)</li></ul></div><div class="points"><b>要点</b><ul><li>Msg = name + content + role，是 AgentScope 里唯一的消息载体</li><li>字符串会被自动包装成 Msg；显式构造 Msg 能控制更多字段</li><li>多 Agent 协作时，消息带身份（name）是模型判断『谁在说话』的依据</li></ul></div></div><div class="lesson"><h4>async 主函数：脚本为什么这样写</h4><p>你可能奇怪：为什么所有示例都有 async def main() 和 asyncio.run(main()) 这两行？因为 AgentScope 的 Agent 调用是异步函数，异步函数必须在 async 上下文中 await 调用，而 asyncio.run() 是启动整个 async 程序的入口。</p><p>简单理解：async def 定义了一个『可以边等边干别的』的函数；await 表示『等这个异步操作完成』；asyncio.run(main()) 负责启动它。多智能体协作时，多个 Agent 的模型调用都是 IO 等待，异步让它们可以并行，这正是官方 fanout 管道能同时跑多个 Agent 的原因。</p><p>初学者最常见的错误是忘了 await 或忘了 asyncio.run。如果打印出来的是 &lt;coroutine object ...&gt;，就是漏了 await；如果报 RuntimeError: asyncio.run() cannot be called from a running event loop，则是你在 async 函数里又调了 asyncio.run。记住口诀：『定义用 async def，调用要 await，入口用 asyncio.run』。</p><div class="steps"><b>操作步骤</b><ol><li>把上一节 first_agent.py 里 asyncio.run(main()) 临时删掉，运行看报什么错（学习诊断）</li><li>把 await agent(...) 里的 await 删掉，运行观察打印的 coroutine 对象</li><li>改回正确写法，确认程序恢复正常——理解这三行代码各自的作用</li></ol></div><div class="pitfalls"><b>常见坑</b><ul><li>漏 await：打印 &lt;coroutine object main at ...&gt;，加回 await 即可</li><li>在 async 函数内又写 asyncio.run：会报 running event loop 错误</li><li>async def 与普通 def 混淆：被 await 的对象必须是 async def 定义的可等待对象</li></ul></div><div class="points"><b>要点</b><ul><li>async def 定义异步函数，await 等待结果，asyncio.run 是启动入口</li><li>AgentScope 的 Agent 调用都是异步的，统一用 await</li><li>用『删掉看报错』的方式理解语法，比死记规则更有效</li></ul></div></div>
+
+  <div class="res"><h4>延伸阅读（资源）</h4><table><thead><tr><th>资源</th><th>类型</th><th>为什么看</th></tr></thead><tbody><tr><td><a href="https://doc.agentscope.io/tutorial/create_react_agent.html" target="_blank" rel="noopener">官方文档 · 创建 ReAct 智能体</a> <span class="tier" style="background:#0369a1">官方</span></td><td>tutorial</td><td>创建 Agent 的官方教程，含完整代码与解释</td></tr><tr><td><a href="https://doc.agentscope.io/tutorial/create_message.html" target="_blank" rel="noopener">官方文档 · 创建消息 Create Message</a> <span class="tier" style="background:#0369a1">官方</span></td><td>tutorial</td><td>Msg 的官方用法，字段与构造方式以这里为准</td></tr><tr><td><a href="https://doc.agentscope.io/tutorial/key_concepts.html" target="_blank" rel="noopener">官方文档 · 核心概念</a> <span class="tier" style="background:#0369a1">官方</span></td><td>docs</td><td>把 Agent/Msg/模型/格式化器的关系再看一遍，巩固概念</td></tr><tr><td><a href="https://docs.python.org/zh-cn/3/library/asyncio.html" target="_blank" rel="noopener">Python 官方文档 · asyncio 入门</a> <span class="tier" style="background:#0f766e">可靠</span></td><td>docs</td><td>看不懂 async/await 时查这里，权威且免费</td></tr></tbody></table></div>
+
+  <div class="prac"><h4>动手练习</h4><ol><li>创建 2 个不同角色的 Agent，分别问它们同一个问题，比较回答风格差异</li><li>显式构造 Msg 发给 Agent，打印返回 Msg 的 name/content/role 三个字段</li><li>故意制造一次『漏 await』错误并成功修复，把报错信息截图存进学习笔记</li></ol></div>
+
+  <div class="quiz"><h4>自测问题</h4><ul><li>创建 ReActAgent 需要哪三样东西？formatter 在多 Agent 场景为什么必须用 DashScopeMultiAgentFormatter？</li><li>Msg 的三个核心字段是什么？为什么协作场景需要消息带 name？</li><li>打印出 &lt;coroutine object&gt; 说明代码犯了什么错？怎么修？</li><li>应用题：如果要把 sys_prompt 改成『你是一个严格的英文校对员，用英文回复』，代码里改哪一行？</li></ul></div>
+
+  <div class="checklist"><h4>能力自检（学完你能……）</h4><ul><li>能从零手写一个创建 ReActAgent 并对话的脚本（不抄教程）</li><li>能解释 async def / await / asyncio.run 各自的作用</li><li>能构造 Msg 并读取其字段，知道 name/content/role 的含义</li></ul></div>
+
+  <div class="help"><h4>遇到问题怎么办</h4><ul><li>官方文档站（权威优先）：https://doc.agentscope.io/ —— 教程与 FAQ 页面覆盖绝大多数问题</li><li>GitHub Issues（报错求助）：https://github.com/agentscope-ai/agentscope/issues —— 搜关键词或开新 Issue，附完整报错</li><li>官方社区：GitHub Discussions https://github.com/agentscope-ai/agentscope/discussions 与官方 Discord 群</li><li>关键口诀：报错先看消息流定位到具体 Agent，再对照官方 pipeline 教程的代码逐行核对</li></ul></div>
+
+  <footer>由 knowledge-learning-path 技能生成 · 资源权威性标注：官方 = 官方文档/论文/官方示例，可靠 = 权威课程/维护者博客/技术媒体，社区 = 社区文章（供补充参考）</footer>
+</div>
+</body>
+</html>

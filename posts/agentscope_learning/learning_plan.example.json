@@ -1,0 +1,905 @@
+{
+  "topic": "AgentScope",
+  "goal": "从零掌握 AgentScope 多智能体框架：能独立搭建、运行并扩展多智能体应用",
+  "date": "2026-09-23",
+  "summary": "AgentScope 是阿里巴巴开源的多智能体（Multi-Agent）开发平台，提供高鲁棒、高易用的 Agent 编程框架，支持智能体构建、多智能体协作编排、消息通信、管道（Pipeline）与可视化调试，内置超时控制、错误处理等工程能力。本教程基于官方稳定版文档（doc.agentscope.io）的真实 API，带零基础用户从安装开始，一步步走到能独立搭建多智能体协作应用。",
+  "prerequisites": [
+    {
+      "name": "Python 基础（函数、类、async/await）",
+      "necessity": "must",
+      "check": "能独立写一个带参数和返回值的函数；能读懂 class 定义；知道 async def 函数要用 await 调用、asyncio.run() 入口",
+      "remedy": "Python 官方教程 https://docs.python.org/zh-cn/3/tutorial/ 前 10 章；异步部分看《Python Cookbook》第 15 章或廖雪峰 Python 教程的 async/await 小节",
+      "guide": {
+        "title": "Python 基础速成（补学版）",
+        "summary": "用 3 个短小节补齐 AgentScope 教程需要的 Python 基础：函数、类、async/await。学完能读懂本教程中的 Python 代码。预计 1~2 小时。",
+        "lessons": [
+          {
+            "title": "函数与返回值",
+            "body": "函数是把一段可以重复使用的代码打包起来，给它取个名字。写代码时，你会反复做同一件事（比如把文本拼起来、计算价格），每次都复制粘贴很麻烦，函数就是解决这个的：定义一次，处处调用。可以把函数想象成一台『豆浆机』：你投入豆子（参数），它输出豆浆（返回值）。\n\nPython 里用 `def` 定义函数：`def 函数名(参数):` 下面是函数体。函数体最后用 `return` 把结果交出来。调用时写 `函数名(参数)` 就能拿到返回值。AgentScope 教程里你写的 `sys_prompt`、`name` 等大多是传给 Agent 的字符串参数，理解函数的参数与返回值，就能看懂这些调用。",
+            "code": "def greet(name):\n    return \"你好，\" + name + \"！\"\n\nmsg = greet(\"小明\")\nprint(msg)",
+            "expected_output": "你好，小明！",
+            "steps": [
+              "用 def 定义函数 greet，接收一个参数 name",
+              "函数体里用 return 返回拼好的字符串",
+              "调用 greet(\"小明\") 并把结果打印出来"
+            ],
+            "key_points": [
+              "函数 = 打包可复用代码，def 定义、return 返回",
+              "调用时括号里传参数，得到返回值",
+              "AgentScope 里大量 API 都是『传参数、拿结果』的形式"
+            ]
+          },
+          {
+            "title": "类与对象",
+            "body": "类（class）是把『数据 + 操作这些数据的方法』打包在一起的结构。可以把它想成一张设计图纸：图纸本身不是房子，但按图纸能造出很多房子（对象）。比如一个 Agent 有名字、有系统提示词（数据），有『回复消息』的能力（方法），在 AgentScope 里 Agent 就是一个类，你用类创建一个个具体的智能体实例。\n\n定义类用 `class 类名:`，类里用 `def __init__(self, ...)` 定义初始化方法（self 指实例自己），普通方法也写在类里。创建实例用 `类名(参数)`。教程中 `ReActAgent(...)` 就是创建 Agent 实例的过程，理解类与实例的关系后，你就知道每个 Agent 各自拥有独立的状态。",
+            "code": "class Robot:\n    def __init__(self, name):\n        self.name = name\n\n    def say_hi(self):\n        return \"我是 \" + self.name\n\nr = Robot(\"小助手\")\nprint(r.say_hi())",
+            "expected_output": "我是 小助手",
+            "steps": [
+              "用 class 定义 Robot 类，__init__ 里保存 name",
+              "定义 say_hi 方法返回自我介绍",
+              "创建实例 r = Robot(\"小助手\") 并调用方法"
+            ],
+            "key_points": [
+              "类 = 图纸，对象 = 按图纸造出的实例",
+              "self.name 是实例自己的数据，各实例互不干扰",
+              "AgentScope 中 ReActAgent 就是类，教程代码在创建实例"
+            ]
+          },
+          {
+            "title": "async/await 与 asyncio.run",
+            "body": "异步（async）让程序在等待时（比如等模型返回）先去干别的，而不是傻等。可以把它想成点外卖：你下单后不会一直盯着手机发呆，而是边做别的事边等外卖。Python 用 `async def` 定义『协程』（可暂停的函数），用 `await` 暂停等待某个异步操作完成，最后用 `asyncio.run()` 启动整个异步程序。\n\nAgentScope 的 Agent 调用是异步的：`await agent(...)` 这样的写法意味着『调用 Agent 并等它回复』。初学者最常犯的错是忘写 `await`（报错说 coroutine 未被等待），或忘了用 `asyncio.run()` 启动（直接调用协程不会执行）。记住一个模板：入口函数写成 `async def main(): ...`，最后 `asyncio.run(main())`。",
+            "code": "import asyncio\n\nasync def say_hello():\n    print(\"开始\")\n    await asyncio.sleep(1)   # 模拟等待\n    print(\"结束\")\n\nasyncio.run(say_hello())",
+            "expected_output": "开始\n（停顿 1 秒）\n结束",
+            "steps": [
+              "用 async def 定义协程函数",
+              "函数内用 await 等待异步操作（示例用 asyncio.sleep 模拟）",
+              "用 asyncio.run() 启动协程"
+            ],
+            "pitfalls": [
+              "调用 async 函数但不 await：报 TypeError 提示 coroutine 未等待",
+              "忘了 asyncio.run()：协程只创建不执行，看不到任何输出",
+              "在同步函数里直接 await：语法错误，async 只能在 async 函数内"
+            ],
+            "key_points": [
+              "async def 定义可暂停函数，await 暂停等待",
+              "asyncio.run(入口()) 启动异步程序，是固定模板",
+              "AgentScope 的 Agent 调用要 await，教程代码以此为准"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "大模型与 API 基础概念",
+      "necessity": "should",
+      "check": "知道什么是大语言模型（LLM）、什么是 API Key、什么是 token；明白『发一条请求带 prompt，模型返回文本』的调用模型",
+      "remedy": "随便读一篇大模型科普（如李宏毅《机器学习》LLM 讲座）或各大模型平台的『快速开始』文档（OpenAI/DashScope 皆可）",
+      "guide": {
+        "title": "大模型与 API 基础（补学版）",
+        "summary": "用 2 个短小节弄懂大语言模型（LLM）与 API 调用模型：LLM 是什么、API Key 与一次请求-响应的全过程。预计 0.5~1 小时。",
+        "lessons": [
+          {
+            "title": "大语言模型（LLM）是什么",
+            "body": "大语言模型（Large Language Model，LLM）是经过海量文本训练的程序，核心能力是『根据前文预测下一个词』，逐词生成连贯的回复。可以把它想成一个读过海量书籍的『接话大师』：你给它一句话，它能顺着接出非常自然的下一句，接得足够多就成了完整回答。\n\n现代 LLM（如 GPT、Qwen）不仅能接话，还能理解指令、推理、写代码、总结文档。但它不是数据库也不是搜索引擎：它『记得』的是训练时见过的规律，可能编造细节（幻觉）。在 Agent 场景里，LLM 充当智能体的『大脑』——接收消息、决定下一步做什么。理解这一点就明白为什么 Agent 需要模型：没有模型，Agent 只是个空壳。",
+            "code": "",
+            "expected_output": "",
+            "steps": [],
+            "key_points": [
+              "LLM 是文本生成模型，根据前文预测下一个词",
+              "能理解指令、推理、写代码，但可能产生幻觉",
+              "Agent 用 LLM 当大脑：决定想什么、说什么、做什么"
+            ]
+          },
+          {
+            "title": "API 与 API Key：一次调用的全过程",
+            "body": "API（Application Programming Interface，应用程序接口）是程序之间通信的约定：你的代码向模型平台发一个 HTTP 请求，平台把模型生成的文本返回给你。整个流程是：你的程序带上『提示词（prompt）』和『身份凭证（API Key）』请求模型服务 → 平台把文本切成小块（token）让模型逐个生成 → 返回完整回复。token 是模型计费的最小单位，大致 1 个汉字约 1~2 个 token。\n\nAPI Key 是你的身份凭证，就像门禁卡——只有带卡才能调用模型，调用按 token 计费。安全要点：Key 不要写进代码里提交到 GitHub，通常放到环境变量（教程中写作 `os.environ[\"DASHSCOPE_API_KEY\"]`），程序运行时从环境变量读取。AgentScope 帮你封装了这套请求-响应过程：你只需配置模型与 Key，框架负责发请求、组装对话、拿回回复，这就是教程 L0 要做的『准备模型』。",
+            "code": "",
+            "expected_output": "",
+            "steps": [
+              "去模型平台（如阿里云百炼 DashScope）注册并创建 API Key",
+              "把 Key 设为环境变量（Windows：setx DASHSCOPE_API_KEY 你的Key；macOS/Linux：export DASHSCOPE_API_KEY=你的Key）",
+              "在主教程 L0 用 os.environ 读取并创建模型对象"
+            ],
+            "pitfalls": [
+              "把 Key 写进代码或提交到公开仓库：会被盗用产生费用",
+              "环境变量名拼写不一致：程序报 KeyError 或鉴权失败",
+              "额度不足/欠费：请求返回 401 或余额错误，需到平台充值"
+            ],
+            "key_points": [
+              "API = 程序调用模型服务的接口，发请求拿回复",
+              "token 是计费单位，1 个汉字约 1~2 token",
+              "API Key 是凭证，放环境变量、勿进代码库",
+              "AgentScope 封装调用细节，你只需配置模型与 Key"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Python 3.11+ 与包管理工具",
+      "necessity": "must",
+      "check": "python --version 显示 3.11 及以上；会用 pip 或 uv 安装 Python 包",
+      "remedy": "到 python.org 安装 3.11+；uv 安装见 https://docs.astral.sh/uv/ （一条命令即可）"
+    },
+    {
+      "name": "一个大模型服务的 API Key",
+      "necessity": "must",
+      "check": "拥有 DashScope（阿里云百炼）、OpenAI 等任一平台的有效 API Key，且余额充足；能放到环境变量中读取",
+      "remedy": "DashScope 注册与获取 Key：https://bailian.console.aliyun.com/ ；本教程示例默认使用 DashScope（qwen-max），其他平台替换 model 与 key 即可"
+    }
+  ],
+  "map": [
+    {
+      "name": "Agent 基础",
+      "desc": "什么是智能体、Agent 的核心能力、创建与调用"
+    },
+    {
+      "name": "消息 Msg",
+      "desc": "Agent 之间传什么：Msg 的结构与构造"
+    },
+    {
+      "name": "多智能体协作",
+      "desc": "MsgHub 广播、Sequential/Fanout 管道串联多个 Agent"
+    },
+    {
+      "name": "模型与格式化器",
+      "desc": "接入 LLM 模型（DashScopeChatModel）与对话格式化器"
+    },
+    {
+      "name": "工具与技能",
+      "desc": "@tool 工具调用，与 Agent Skill 技能包的设计、加载与使用"
+    },
+    {
+      "name": "工程化与调试",
+      "desc": "超时、日志、可视化调试与求助路径"
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Agent",
+      "zh": "智能体",
+      "desc": "能自主思考、调用工具并完成任务的对象；本教程用 ReActAgent 创建"
+    },
+    {
+      "term": "ReAct",
+      "zh": "思考-行动循环",
+      "desc": "Reasoning + Acting：模型先思考，再决定是否调用工具，观察结果后继续"
+    },
+    {
+      "term": "Msg",
+      "zh": "消息",
+      "desc": "AgentScope 中所有通信的载体，含 name（谁发的）、content（内容）、role（角色）"
+    },
+    {
+      "term": "sys_prompt",
+      "zh": "系统提示词",
+      "desc": "创建 Agent 时设定的角色与行为约束，决定 Agent『是谁、怎么干活』"
+    },
+    {
+      "term": "formatter",
+      "zh": "格式化器",
+      "desc": "把对话历史格式化成模型能理解的模板；多 Agent 场景用 DashScopeMultiAgentFormatter"
+    },
+    {
+      "term": "Pipeline",
+      "zh": "管道",
+      "desc": "把多个 Agent 按固定逻辑串联/并联执行的语法糖：Sequential（顺序）与 Fanout（扇出）"
+    },
+    {
+      "term": "MsgHub",
+      "zh": "消息中心",
+      "desc": "一个 Agent 发言会自动广播给其他参与者的消息集散地"
+    },
+    {
+      "term": "DashScopeChatModel",
+      "zh": "DashScope 对话模型",
+      "desc": "AgentScope 内置的模型封装，接入阿里云百炼（qwen 系列）"
+    },
+    {
+      "term": "async/await",
+      "zh": "异步调用",
+      "desc": "Python 异步语法；AgentScope 的 Agent 调用是异步的，必须 await"
+    },
+    {
+      "term": "asyncio.run",
+      "zh": "异步入口",
+      "desc": "运行 async 主函数的入口，脚本以此启动"
+    },
+    {
+      "term": "API Key",
+      "zh": "接口密钥",
+      "desc": "调用大模型服务的凭证，通过环境变量读取，不要写进代码"
+    },
+    {
+      "term": "stream_printing_messages",
+      "zh": "消息流打印",
+      "desc": "把 Agent 运行中的中间消息转成异步生成器，用于观察过程"
+    },
+    {
+      "term": "Agent Skill",
+      "zh": "智能体技能",
+      "desc": "Anthropic 提出的方法：把任务做法打包成含 SKILL.md 的文件夹，Agent 读取指引后行动；Skill 不是可调用工具"
+    },
+    {
+      "term": "Toolkit",
+      "zh": "技能工具箱",
+      "desc": "AgentScope 管理 Agent Skill 的类：register_agent_skill / remove_agent_skill / get_agent_skill_prompt，可整体传给 ReActAgent"
+    }
+  ],
+  "phases": [
+    {
+      "level": "L0",
+      "title": "认识与准备",
+      "dependency": "无。零基础可开始；但请先对照总览页『开始前检查』逐项自检前置知识，未达标先补。",
+      "objective": "理解 AgentScope 是什么、能解决什么问题；在本机完成安装并成功运行官方快速开始",
+      "duration": "预计 1~2 小时",
+      "lessons": [
+        {
+          "title": "AgentScope 是什么：先建立直觉",
+          "body": "可以把多智能体框架想象成一个『乐高工厂』：Agent 是乐高小人，每个小人各司其职（一个负责策划、一个负责写作）；Msg 是小人之间传递的纸条；Pipeline 是把小人按顺序排成流水线的传送带。AgentScope 就是这套乐高的官方图纸和零件库——你不用自己实现『怎么让两个 AI 互相传话』，框架已经做好了。\n\n为什么要用多智能体框架而不是直接调一个大模型 API？因为真实任务往往需要分工与协作：一个 Agent 负责拆解任务，另一个负责执行，第三个负责质检。每个 Agent 用不同的提示词和工具，各管一段，比让一个模型从头干到尾更可控、更容易调试。\n\nAgentScope 的核心卖点就三件事：一是『高鲁棒』——内置超时控制、错误处理，多智能体系统不容易崩；二是『易用』——用 Python 函数式的写法就能创建和编排 Agent；三是『可视化』——有 AgentScope Studio 等工具能观察消息流和调用链，调试多智能体系统不再靠猜。\n\n学完本节，你只需要记住一个定位：AgentScope 是帮你『用代码组装多个 AI 助手并让它们协作』的 Python 框架。",
+          "key_points": [
+            "AgentScope 是阿里巴巴开源的多智能体开发平台，定位是『组装多个 AI 助手并让它们协作』",
+            "核心三卖点：高鲁棒（超时/错误处理）、易用（函数式写法）、可视化（Studio 调试）",
+            "本教程基于官方稳定版文档（doc.agentscope.io），API 以官方为准"
+          ]
+        },
+        {
+          "title": "安装与环境验证（动手第一步）",
+          "body": "AgentScope 要求 Python 3.11 及以上版本。先确认你的 Python 版本，再安装框架。官方推荐用 uv 安装，也可以用 pip。\n\n安装完成后做一次『冒烟测试』：import 框架并打印版本。如果 import 成功，说明安装没问题，可以进入下一阶段。这是每个新框架学习者的第一个成功体验，务必亲手敲一遍。\n\n两个最常踩的坑：一是 Python 版本太低（3.10 及以下直接报语法错误或依赖不兼容）；二是同时装了多个 Python，导致 uv/pip 装的包和运行代码的 Python 不是同一个（用 python --version 与 pip show agentscope 交叉验证）。",
+          "code": "uv pip install agentscope",
+          "expected_output": "终端显示安装进度，最后出现 Installed 或类似的成功提示",
+          "steps": [
+            "打开终端，输入 python --version，确认是 3.11 及以上；不足则先升级 Python",
+            "安装 uv（若没有）：pip install uv",
+            "运行 uv pip install agentscope 安装框架",
+            "用 python -c \"import agentscope; print(agentscope.__version__)\" 验证安装成功"
+          ],
+          "pitfalls": [
+            "Python 版本低于 3.11：AgentScope 官方要求 3.11+，先升级再安装",
+            "多 Python 环境混乱：确保 uv/pip 与运行脚本用的是同一个解释器",
+            "网络问题装不上：换国内镜像源（清华/阿里 PyPI 镜像）重试"
+          ],
+          "key_points": [
+            "AgentScope 要求 Python 3.11+，官方推荐 uv pip install agentscope",
+            "装完必须 import 冒烟验证，确认是『同一个 Python』在生效",
+            "任何安装报错优先查官方安装文档：https://doc.agentscope.io/tutorial/installation.html"
+          ]
+        },
+        {
+          "title": "准备模型 API Key（跑通一切的前提）",
+          "body": "AgentScope 本身不内置大模型，它负责编排，真正『思考』的是你接入的模型服务。本教程默认使用阿里云百炼（DashScope）的 qwen 系列，因为它国内可直接访问、示例代码遍布官方文档。\n\n你需要做三件事：注册 DashScope 账号、创建 API Key、把 Key 放进环境变量。官方示例统一用 os.environ['DASHSCOPE_API_KEY'] 读取，所以把你的 Key 设成同名环境变量，之后所有示例代码都能直接跑。\n\n为什么不把 Key 直接写在代码里？一是安全：代码可能被分享、上传，Key 泄露等于别人花你的钱调用模型；二是习惯：真实工程里密钥永远走环境变量或密钥管理服务。养成『代码不写密钥』的习惯，从第一天开始。",
+          "steps": [
+            "注册阿里云百炼：https://bailian.console.aliyun.com/ ，实名认证后进入控制台",
+            "在控制台『API-KEY』页面创建密钥，复制保存",
+            "设置环境变量：Windows 用 setx DASHSCOPE_API_KEY \"你的密钥\"（新开终端生效）；macOS/Linux 用 export DASHSCOPE_API_KEY=你的密钥 写入 ~/.zshrc 或 ~/.bashrc",
+            "验证：终端运行 python -c \"import os; print(bool(os.environ['DASHSCOPE_API_KEY']))\"，输出 True 即成功"
+          ],
+          "pitfalls": [
+            "环境变量设了但读不到：setx 设置后必须重开终端；macOS 要 source 配置文件",
+            "Key 里带空格或引号：setx 的引号用法易错，设置后立刻用上面第 4 步验证",
+            "账户无余额/未开通模型：百炼控制台检查是否开通 qwen 系列模型"
+          ],
+          "key_points": [
+            "AgentScope 编排智能体，模型由你接入；本教程默认 DashScope qwen",
+            "API Key 放环境变量 DASHSCOPE_API_KEY，代码里用 os.environ 读取，禁止写死",
+            "Key 配好并验证通过，后续所有示例才能跑通"
+          ]
+        }
+      ],
+      "resources": [
+        {
+          "title": "官方文档 · 安装 Installation",
+          "url": "https://doc.agentscope.io/tutorial/installation.html",
+          "tier": "official",
+          "type": "docs",
+          "note": "安装的权威说明，遇到环境问题先查这里"
+        },
+        {
+          "title": "官方文档 · 核心概念 Key Concepts",
+          "url": "https://doc.agentscope.io/tutorial/key_concepts.html",
+          "tier": "official",
+          "type": "docs",
+          "note": "30 分钟建立 AgentScope 的核心概念框架"
+        },
+        {
+          "title": "GitHub 仓库 · agentscope-ai/agentscope",
+          "url": "https://github.com/agentscope-ai/agentscope",
+          "tier": "official",
+          "type": "example",
+          "note": "README 有安装命令与第一个 Agent 示例；examples/ 目录有大量可跑示例"
+        },
+        {
+          "title": "论文 · AgentScope: A Flexible yet Robust Multi-Agent Platform",
+          "url": "https://arxiv.org/abs/2402.14034",
+          "tier": "official",
+          "type": "paper",
+          "note": "想了解设计动机与架构可读；入门阶段可选读"
+        }
+      ],
+      "practice": [
+        "完成安装并跑通 import 冒烟验证，记录你的 Python 版本",
+        "配置 DASHSCOPE_API_KEY 环境变量并验证读取成功",
+        "浏览官方 GitHub 仓库 examples/ 目录，挑 1 个你感兴趣的示例读一读"
+      ],
+      "quiz": [
+        "AgentScope 是做什么的？和直接调大模型 API 有什么区别？",
+        "为什么 API Key 不能写死在代码里？环境变量读取的好处是什么？",
+        "安装后如何确认框架真的装好了？（说出验证命令）",
+        "假如你是 Mac 用户，设置环境变量后为什么读不到？该怎么解决？"
+      ],
+      "checklist": [
+        "能一句话向别人解释 AgentScope 的定位（多智能体协作框架）",
+        "能在自己电脑上安装成功并 import 验证通过",
+        "能正确配置并验证 DASHSCOPE_API_KEY 环境变量"
+      ]
+    },
+    {
+      "level": "L1",
+      "title": "快速上手：跑通第一个 Agent",
+      "dependency": "需先完成 L0（安装 + API Key 就绪）。",
+      "objective": "用官方 API 创建并运行第一个 ReActAgent，理解 Msg 消息与异步调用方式",
+      "duration": "预计 2~3 小时",
+      "lessons": [
+        {
+          "title": "创建第一个 Agent（官方写法）",
+          "body": "官方示例里创建 Agent 的标准写法是 ReActAgent + DashScopeChatModel + DashScopeMultiAgentFormatter。先看懂这三样东西：ReActAgent 是『会思考的智能体』（ReAct 即 Reasoning+Acting，先想再动）；DashScopeChatModel 是接入 qwen 模型的封装；formatter 决定对话历史怎么组织——多 Agent 场景必须用 DashScopeMultiAgentFormatter，它会把不同 Agent 的名字带进消息，让模型知道『谁在说话』。\n\n下面这段代码是官方 pipeline 教程中创建 Agent 的原版写法（仅改了角色文案）。注意：Agent 的调用是异步的（async/await），这是 AgentScope 的惯例——模型调用是 IO 操作，异步能同时跑多个 Agent。",
+          "code": "import os\nimport asyncio\nfrom agentscope.agent import ReActAgent\nfrom agentscope.formatter import DashScopeMultiAgentFormatter\nfrom agentscope.model import DashScopeChatModel\n\n\ndef create_agent(name: str, sys_prompt: str) -> ReActAgent:\n    \"\"\"按官方推荐方式创建一个 ReAct 智能体\"\"\"\n    return ReActAgent(\n        name=name,\n        sys_prompt=sys_prompt,\n        model=DashScopeChatModel(\n            model_name=\"qwen-max\",\n            api_key=os.environ[\"DASHSCOPE_API_KEY\"],\n        ),\n        formatter=DashScopeMultiAgentFormatter(),\n    )\n\n\nasync def main() -> None:\n    agent = create_agent(\n        \"assistant\",\n        \"You're a helpful assistant. Reply in Chinese.\",\n    )\n    # 直接向 Agent 发一条消息（字符串会被自动包装成 Msg）\n    reply = await agent(\"你好，请用一句话介绍什么是多智能体系统\")\n    print(reply)\n\n\nasyncio.run(main())",
+          "expected_output": "终端打印一条 Msg 对象：name='assistant'，content 里是模型回复『多智能体系统是……』的文本。如果看到 KeyError: DASHSCOPE_API_KEY，说明环境变量没配对（回 L0 检查）。",
+          "steps": [
+            "把上方代码保存为 first_agent.py",
+            "确认 DASHSCOPE_API_KEY 环境变量已设置（L0 已验证）",
+            "运行 python first_agent.py，观察打印的 Msg",
+            "改 sys_prompt 里的角色描述，再跑一次，感受提示词对回答风格的影响"
+          ],
+          "pitfalls": [
+            "报 ModuleNotFoundError: agentscope 相关模块：先确认安装成功且解释器一致",
+            "报 KeyError: DASHSCOPE_API_KEY：环境变量没设或没在新终端生效",
+            "忘记 await：调用 Agent 不加 await 会打印 coroutine 对象而不是结果",
+            "model_name 用错：qwen 系列用 qwen-max / qwen-plus 等官方模型名"
+          ],
+          "key_points": [
+            "创建 Agent 三件套：ReActAgent + DashScopeChatModel + DashScopeMultiAgentFormatter",
+            "Agent 调用是异步的：await agent(消息) 才能拿到回复",
+            "api_key 一律从 os.environ 读，不要写死在代码里"
+          ]
+        },
+        {
+          "title": "理解消息 Msg：Agent 之间传什么",
+          "body": "刚才你传字符串给 agent，AgentScope 内部会把它包装成 Msg。Msg 是框架里所有通信的统一载体，理解它等于理解了框架的『语言』。\n\nMsg 的核心字段：name（谁发的消息）、content（内容，可以是纯文本，也可以是结构化内容）、role（消息角色：user/assistant/system）。构造方式有两种等价写法：Msg(\"user\", \"内容\", \"user\") 位置参数，或 Msg(name=\"user\", content=\"内容\", role=\"user\") 关键字参数。\n\n为什么 Agent 之间传东西要用 Msg 而不是直接传字符串？因为协作场景需要『带身份的消息』：writer 收到一条消息，必须知道它是 planner 发来的大纲还是 user 的原始需求；role 字段让模型能区分『这是系统指令还是用户输入』。Msg 还统一了消息历史记录，方便调试时回看每一步传递。",
+          "code": "from agentscope.message import Msg\n\n# 两种等价构造方式\nmsg1 = Msg(\"user\", \"帮我列三个学习 Python 的步骤\", \"user\")\nmsg2 = Msg(name=\"user\", content=\"帮我列三个学习 Python 的步骤\", role=\"user\")\n\n# 读取字段\nprint(msg1.name)      # user\nprint(msg1.content)   # 帮我列三个学习 Python 的步骤\nprint(msg1.role)      # user",
+          "expected_output": "依次打印：user / 帮我列三个学习 Python 的步骤 / user",
+          "pitfalls": [
+            "把 content 误认为就是消息本身：调试时记住 name/content/role 三个字段都要看",
+            "位置参数顺序记错：Msg 的位置顺序是 (name, content, role)"
+          ],
+          "key_points": [
+            "Msg = name + content + role，是 AgentScope 里唯一的消息载体",
+            "字符串会被自动包装成 Msg；显式构造 Msg 能控制更多字段",
+            "多 Agent 协作时，消息带身份（name）是模型判断『谁在说话』的依据"
+          ]
+        },
+        {
+          "title": "async 主函数：脚本为什么这样写",
+          "body": "你可能奇怪：为什么所有示例都有 async def main() 和 asyncio.run(main()) 这两行？因为 AgentScope 的 Agent 调用是异步函数，异步函数必须在 async 上下文中 await 调用，而 asyncio.run() 是启动整个 async 程序的入口。\n\n简单理解：async def 定义了一个『可以边等边干别的』的函数；await 表示『等这个异步操作完成』；asyncio.run(main()) 负责启动它。多智能体协作时，多个 Agent 的模型调用都是 IO 等待，异步让它们可以并行，这正是官方 fanout 管道能同时跑多个 Agent 的原因。\n\n初学者最常见的错误是忘了 await 或忘了 asyncio.run。如果打印出来的是 <coroutine object ...>，就是漏了 await；如果报 RuntimeError: asyncio.run() cannot be called from a running event loop，则是你在 async 函数里又调了 asyncio.run。记住口诀：『定义用 async def，调用要 await，入口用 asyncio.run』。",
+          "steps": [
+            "把上一节 first_agent.py 里 asyncio.run(main()) 临时删掉，运行看报什么错（学习诊断）",
+            "把 await agent(...) 里的 await 删掉，运行观察打印的 coroutine 对象",
+            "改回正确写法，确认程序恢复正常——理解这三行代码各自的作用"
+          ],
+          "pitfalls": [
+            "漏 await：打印 <coroutine object main at ...>，加回 await 即可",
+            "在 async 函数内又写 asyncio.run：会报 running event loop 错误",
+            "async def 与普通 def 混淆：被 await 的对象必须是 async def 定义的可等待对象"
+          ],
+          "key_points": [
+            "async def 定义异步函数，await 等待结果，asyncio.run 是启动入口",
+            "AgentScope 的 Agent 调用都是异步的，统一用 await",
+            "用『删掉看报错』的方式理解语法，比死记规则更有效"
+          ]
+        }
+      ],
+      "resources": [
+        {
+          "title": "官方文档 · 创建 ReAct 智能体",
+          "url": "https://doc.agentscope.io/tutorial/create_react_agent.html",
+          "tier": "official",
+          "type": "tutorial",
+          "note": "创建 Agent 的官方教程，含完整代码与解释"
+        },
+        {
+          "title": "官方文档 · 创建消息 Create Message",
+          "url": "https://doc.agentscope.io/tutorial/create_message.html",
+          "tier": "official",
+          "type": "tutorial",
+          "note": "Msg 的官方用法，字段与构造方式以这里为准"
+        },
+        {
+          "title": "官方文档 · 核心概念",
+          "url": "https://doc.agentscope.io/tutorial/key_concepts.html",
+          "tier": "official",
+          "type": "docs",
+          "note": "把 Agent/Msg/模型/格式化器的关系再看一遍，巩固概念"
+        },
+        {
+          "title": "Python 官方文档 · asyncio 入门",
+          "url": "https://docs.python.org/zh-cn/3/library/asyncio.html",
+          "tier": "reliable",
+          "type": "docs",
+          "note": "看不懂 async/await 时查这里，权威且免费"
+        }
+      ],
+      "practice": [
+        "创建 2 个不同角色的 Agent，分别问它们同一个问题，比较回答风格差异",
+        "显式构造 Msg 发给 Agent，打印返回 Msg 的 name/content/role 三个字段",
+        "故意制造一次『漏 await』错误并成功修复，把报错信息截图存进学习笔记"
+      ],
+      "quiz": [
+        "创建 ReActAgent 需要哪三样东西？formatter 在多 Agent 场景为什么必须用 DashScopeMultiAgentFormatter？",
+        "Msg 的三个核心字段是什么？为什么协作场景需要消息带 name？",
+        "打印出 <coroutine object> 说明代码犯了什么错？怎么修？",
+        "应用题：如果要把 sys_prompt 改成『你是一个严格的英文校对员，用英文回复』，代码里改哪一行？"
+      ],
+      "checklist": [
+        "能从零手写一个创建 ReActAgent 并对话的脚本（不抄教程）",
+        "能解释 async def / await / asyncio.run 各自的作用",
+        "能构造 Msg 并读取其字段，知道 name/content/role 的含义"
+      ]
+    },
+    {
+      "level": "L2",
+      "title": "核心概念：多智能体协作与编排",
+      "dependency": "需先完成 L1（能创建 Agent 并对话）。",
+      "objective": "掌握 MsgHub 广播与 Sequential/Fanout 管道，能搭建 2~3 个 Agent 的协作流水线",
+      "duration": "预计 4~6 小时",
+      "lessons": [
+        {
+          "title": "用 MsgHub 做广播：一个说话，全体听到",
+          "body": "MsgHub（消息中心）解决的是『开会』场景：多个 Agent 聚在一起，谁发言都自动广播给其他人，不需要手动把消息一个个传过去。它是官方 pipeline 模块里的一个 async 上下文管理器，创建时传入 participants（参会者列表）和 announcement（开场公告，进入会场时广播给所有人）。\n\n想象一个产品评审会：Alice、Bob、Charlie 入场，主持人广播『请自我介绍』，三个 Agent 依次发言，每个人的发言其他人都能听到——这就是 MsgHub 的效果。它把『手动传递消息』这件事从你的代码里拿掉了，你只需要在 async with MsgHub(...) 的上下文里让每个 Agent 发言即可。\n\n官方还提供了动态管理：hub.add(agent) 添加新参会者、hub.delete(agent) 移除、await hub.broadcast(msg) 主动广播。注意：新加入的参会者收不到之前的消息。",
+          "code": "import os\nimport asyncio\nfrom agentscope.agent import ReActAgent\nfrom agentscope.formatter import DashScopeMultiAgentFormatter\nfrom agentscope.message import Msg\nfrom agentscope.model import DashScopeChatModel\nfrom agentscope.pipeline import MsgHub\n\n\ndef create_agent(name: str, role: str) -> ReActAgent:\n    return ReActAgent(\n        name=name,\n        sys_prompt=role,\n        model=DashScopeChatModel(model_name=\"qwen-max\", api_key=os.environ[\"DASHSCOPE_API_KEY\"]),\n        formatter=DashScopeMultiAgentFormatter(),\n    )\n\n\nasync def meeting() -> None:\n    alice = create_agent(\"alice\", \"You're Alice, a product manager.\")\n    bob = create_agent(\"bob\", \"You're Bob, a developer.\")\n\n    async with MsgHub(\n        participants=[alice, bob],\n        announcement=Msg(\"user\", \"用一句话介绍自己的角色。\", \"user\"),\n    ) as hub:\n        # 各说一句，无需手动传消息，发言自动广播\n        await alice()\n        await bob()\n\n\nasyncio.run(meeting())",
+          "expected_output": "打印 Alice 与 Bob 各自的一句话自我介绍（两人都能看到对方的话，但因为只各说一句，重点是广播机制生效——可在代码里加 await alice() 后再让 bob 复述 Alice 来验证）",
+          "steps": [
+            "把代码保存为 hub_demo.py 并运行，观察两个 Agent 的自我介绍",
+            "把 announcement 改成『请 Alice 先自我介绍，然后 Bob 复述 Alice 的话』，再运行",
+            "观察 Bob 是否准确复述了 Alice——是则广播机制生效",
+            "试一下 hub.add() / hub.delete() 动态管理参会者"
+          ],
+          "pitfalls": [
+            "忘了 async with：MsgHub 必须作为异步上下文管理器使用",
+            "participants 传错类型：必须是 Agent 实例列表",
+            "以为新加入的参会者能收到旧消息：add 之后才发言的才听得到"
+          ],
+          "key_points": [
+            "MsgHub = 消息广播中心：async with MsgHub(participants=[...], announcement=...) 进入会场",
+            "参会者发言自动广播，无需手动传消息",
+            "动态管理：add / delete / broadcast；新参会者收不到历史消息"
+          ]
+        },
+        {
+          "title": "用 Sequential 管道串联 Agent：流水线",
+          "body": "Sequential 管道（sequential_pipeline）解决的是『流水线』场景：上一个人的输出就是下一个人的输入，按顺序执行。典型例子就是『策划 → 写作 → 评审』：planner 产出大纲，writer 拿到大纲写正文，reviewer 拿到正文评审。\n\n官方提供了函数式（sequential_pipeline）与类式（SequentialPipeline）两种写法，功能等价：函数式适合一次性调用，类式适合反复复用（同一个管道换不同输入跑多次）。管道接收两个参数：agents（按执行顺序排列的 Agent 列表）和 msg（第一个输入消息，可以为 None）。\n\n理解这一点很关键：管道本身不做『智能』的事，它只是把『依次 await 每个 Agent 并把上一步的输出传给下一步』这件重复劳动封装起来。你自己写四个 await 也能实现同样效果（官方代码片段 1 就是手动版），管道是它的语法糖——所以先想清楚每个 Agent 输入输出什么，再决定用不用管道。",
+          "code": "import os\nimport asyncio\nfrom agentscope.agent import ReActAgent\nfrom agentscope.formatter import DashScopeMultiAgentFormatter\nfrom agentscope.message import Msg\nfrom agentscope.model import DashScopeChatModel\nfrom agentscope.pipeline import sequential_pipeline\n\n\ndef create_agent(name: str, role: str) -> ReActAgent:\n    return ReActAgent(\n        name=name,\n        sys_prompt=role,\n        model=DashScopeChatModel(model_name=\"qwen-max\", api_key=os.environ[\"DASHSCOPE_API_KEY\"]),\n        formatter=DashScopeMultiAgentFormatter(),\n    )\n\n\nasync def main() -> None:\n    planner = create_agent(\"planner\", \"你是策划：把主题拆成文章大纲，只输出要点。\")\n    writer = create_agent(\"writer\", \"你是写手：根据大纲扩写成完整短文。\")\n\n    result = await sequential_pipeline(\n        agents=[planner, writer],\n        msg=Msg(\"user\", \"写一篇介绍多智能体系统的短文\", \"user\"),\n    )\n    print(result)\n\n\nasyncio.run(main())",
+          "expected_output": "先打印 planner 产出的大纲要点，再打印 writer 根据大纲写出的短文——最终 result 是最后一个 Agent（writer）的回复 Msg",
+          "steps": [
+            "运行代码，观察两个 Agent 先后输出",
+            "调换 agents 顺序（writer 在前），运行看效果差异——理解顺序决定数据流",
+            "把 msg 换成你自己的主题，跑通一次完整『策划→写作』"
+          ],
+          "pitfalls": [
+            "agents 顺序搞错：管道严格按列表顺序执行，下游 Agent 会收到上游输出",
+            "msg 传了错误类型：第一个输入用 Msg 或字符串，None 表示让第一个 Agent 自行开场",
+            "以为管道会自动补上下文：它只传上一步的输出，跨步骤长期记忆需要 L4 的 Memory 机制"
+          ],
+          "key_points": [
+            "sequential_pipeline = 顺序流水线：上一个 Agent 的输出自动成为下一个的输入",
+            "函数式一次性用，类式 SequentialPipeline 可复用",
+            "先设计每个 Agent 的输入/输出，再用管道串联"
+          ]
+        },
+        {
+          "title": "用 Fanout 管道做并行：同一问题，多方视角",
+          "body": "Fanout 管道（fanout_pipeline）解决的是『集思广益』场景：把同一个输入同时发给多个 Agent，收集所有人的回复。典型用法：同一份代码让架构师、安全工程师、性能工程师分别评审，拿到多视角意见。\n\n它的核心参数是 enable_gather：True（默认）用 asyncio.gather 让所有 Agent 并发执行，适合模型调用这种 IO 密集操作（并行显著提速）；False 则按顺序逐个执行，适合需要确定性顺序或怕并发打爆外部服务的场景。返回值是所有 Agent 回复的列表。\n\n官方提示：MsgHub 和两种管道可以组合——广播做『开会』、顺序管道做『流水线』、扇出管道做『并行分诊』，复杂工作流就是这些基本块的组合。学完这一节，你已经掌握了 AgentScope 协作编排的三板斧。",
+          "code": "import os\nimport asyncio\nfrom agentscope.agent import ReActAgent\nfrom agentscope.formatter import DashScopeMultiAgentFormatter\nfrom agentscope.message import Msg\nfrom agentscope.model import DashScopeChatModel\nfrom agentscope.pipeline import fanout_pipeline\n\n\ndef create_agent(name: str, role: str) -> ReActAgent:\n    return ReActAgent(\n        name=name,\n        sys_prompt=role,\n        model=DashScopeChatModel(model_name=\"qwen-max\", api_key=os.environ[\"DASHSCOPE_API_KEY\"]),\n        formatter=DashScopeMultiAgentFormatter(),\n    )\n\n\nasync def main() -> None:\n    architect = create_agent(\"architect\", \"你是架构师：评估方案的架构合理性。\")\n    security = create_agent(\"security\", \"你是安全工程师：指出方案的安全风险。\")\n\n    msgs = await fanout_pipeline(\n        agents=[architect, security],\n        msg=Msg(\"user\", \"评估这个方案：用消息队列解耦订单与库存服务\", \"user\"),\n        enable_gather=True,\n    )\n    for m in msgs:\n        print(m)\n\n\nasyncio.run(main())",
+          "expected_output": "依次打印 architect 与 security 两个 Agent 的回复（各从自己的专业视角评估同一个方案）；enable_gather=True 时两者并发执行",
+          "steps": [
+            "运行代码，观察两个 Agent 从不同视角回答同一问题",
+            "把 enable_gather 改为 False 再跑，对比输出顺序是否固定",
+            "组合练习：先 fanout 收集两个 Agent 意见，再 sequential 让第三个 Agent 汇总"
+          ],
+          "pitfalls": [
+            "enable_gather=True 时输出顺序不保证：并发执行，靠 name 区分谁说的",
+            "并发调用注意 API 限流：怕超限就用 enable_gather=False",
+            "返回的是 Msg 列表：遍历时取 .content 而不是整个对象"
+          ],
+          "key_points": [
+            "fanout_pipeline = 同一输入并行发给多个 Agent，收集全部回复",
+            "enable_gather=True 并发提速；False 顺序执行更可控",
+            "MsgHub（广播）+ Sequential（流水线）+ Fanout（并行分诊）组合出复杂工作流"
+          ]
+        }
+      ],
+      "resources": [
+        {
+          "title": "官方文档 · 管道 Pipeline",
+          "url": "https://doc.agentscope.io/tutorial/task_pipeline.html",
+          "tier": "official",
+          "type": "tutorial",
+          "note": "本阶段核心：MsgHub/Sequential/Fanout 的官方完整教程，含可下载的 notebook 与源码"
+        },
+        {
+          "title": "官方示例 · 多智能体辩论 Multi-Agent Debate",
+          "url": "https://doc.agentscope.io/tutorial/workflow_debate.html",
+          "tier": "official",
+          "type": "example",
+          "note": "用 MsgHub 实现多 Agent 辩论的完整示例，理解广播的实战价值"
+        },
+        {
+          "title": "官方文档 · 并发 Agent",
+          "url": "https://doc.agentscope.io/tutorial/workflow_concurrent_agents.html",
+          "tier": "official",
+          "type": "tutorial",
+          "note": "并行执行 Agent 的官方示例，理解 enable_gather 的底层"
+        },
+        {
+          "title": "Python 官方文档 · asyncio.gather",
+          "url": "https://docs.python.org/zh-cn/3/library/asyncio-task.html",
+          "tier": "reliable",
+          "type": "docs",
+          "note": "理解 fanout 并发背后的 gather 机制"
+        }
+      ],
+      "practice": [
+        "用 MsgHub 搭一个三人『产品评审会』：产品经理、开发、测试各自我介绍并评价一个需求",
+        "用 sequential_pipeline 实现『翻译 + 润色』两步流水线，输入换成自己的内容",
+        "用 fanout_pipeline 让两个 Agent 分别从『优点』和『风险』角度评审同一个技术方案"
+      ],
+      "quiz": [
+        "MsgHub、Sequential、Fanout 分别适合什么场景？各举一个例子",
+        "sequential_pipeline 中，第二个 Agent 的输入从哪里来？",
+        "enable_gather=True 和 False 的区别是什么？什么时候该用 False？",
+        "应用题：公司要做『AI 客服质检』，需要先记录对话、再让质检 Agent 打分、再让主管 Agent 复核，你会用哪种管道？画一下 Agent 顺序"
+      ],
+      "checklist": [
+        "能手写 MsgHub 广播示例并解释广播机制",
+        "能用 sequential_pipeline 搭一条 2 步以上流水线",
+        "能用 fanout_pipeline 做并行评审，并解释 enable_gather 的作用"
+      ]
+    },
+    {
+      "level": "L3",
+      "title": "动手实践：搭建完整协作应用",
+      "dependency": "需先完成 L2（掌握 MsgHub 与两种管道）。",
+      "objective": "独立完成一个「策划-写作-评审」三 Agent 协作应用，掌握从设计到运行的完整流程",
+      "duration": "预计 8~12 小时",
+      "lessons": [
+        {
+          "title": "实战设计：从需求到 Agent 分工",
+          "body": "动手前先做设计。以「自动写一篇技术短文」为例，拆成三个职责单一的 Agent：策划（planner）接收主题，输出大纲与要点；写作（writer）拿到大纲扩写成完整文章；评审（reviewer）检查文章是否跑题、结构是否清晰，给出修改意见。\n\n设计要点有三条。第一，每个 Agent 的 sys_prompt 只说自己的职责，不要越界——planner 不写正文、writer 不评审，职责单一才好测试。第二，消息里带上下游需要的上下文：writer 需要 planner 的大纲，所以用 Sequential 管道天然满足『上一步输出传给下一步』。第三，输出格式对齐：reviewer 需要能读懂 writer 的文章，写作 Agent 就要输出纯文本文章而不是无关的废话。\n\n推荐流程：先用 L1、L2 学的 API 把三个 Agent 分别单独跑通（各自能完成自己的那一步），再组装成管道。分而治之，别一上来就写完整流水线——哪一步出问题都能立刻定位。",
+          "steps": [
+            "为每个角色写 sys_prompt，明确职责与输出预期（大纲/正文/评审意见）",
+            "分别单独创建并测试 planner / writer / reviewer 三个 Agent",
+            "确认单个 Agent 的输出格式满足下游需要（如 writer 能读懂大纲）",
+            "设计消息流转：主题 → planner 大纲 → writer 文章 → reviewer 意见"
+          ],
+          "key_points": [
+            "先设计分工再写代码：每个 Agent 职责单一、输出明确",
+            "先单独跑通每个 Agent，再组装流水线，便于定位问题",
+            "下游 Agent 需要什么格式的输入，由上游 Agent 的输出决定"
+          ]
+        },
+        {
+          "title": "完整实现：三 Agent 协作流水线（可直接运行）",
+          "body": "把设计落成代码：三个 Agent 用同一个 create_agent 工厂创建（只改 name 和 sys_prompt），再用 sequential_pipeline 串联。这是本教程第一份『完整可运行』的项目级代码——它就是官方多智能体协作模式的真实写法，你把主题换成自己的，就能做出第一个自己的多智能体应用。\n\n注意代码里三个细节：sys_prompt 明确写了『只输出……』，这是控制 Agent 行为的惯用手段；formatter 统一用 DashScopeMultiAgentFormatter，保证消息里带 name；最后一个 Agent（reviewer）的输出就是整个应用的最终结果。\n\n跑通后做两个变化实验：一是换主题，二是加一个 Agent（比如校对员），体会『加角色 = 加一个 Agent + 加进 agents 列表』的扩展方式——这就是多智能体框架比单模型 API 强的地方：分工可插拔。",
+          "code": "import os\nimport asyncio\nfrom agentscope.agent import ReActAgent\nfrom agentscope.formatter import DashScopeMultiAgentFormatter\nfrom agentscope.message import Msg\nfrom agentscope.model import DashScopeChatModel\nfrom agentscope.pipeline import sequential_pipeline\n\n\ndef create_agent(name: str, role: str) -> ReActAgent:\n    return ReActAgent(\n        name=name,\n        sys_prompt=role,\n        model=DashScopeChatModel(model_name=\"qwen-max\", api_key=os.environ[\"DASHSCOPE_API_KEY\"]),\n        formatter=DashScopeMultiAgentFormatter(),\n    )\n\n\nasync def main() -> None:\n    planner = create_agent(\n        \"planner\",\n        \"你是策划 Agent：把主题拆成 3-5 个要点的大纲，只输出大纲，不要写正文。\",\n    )\n    writer = create_agent(\n        \"writer\",\n        \"你是写作 Agent：根据大纲扩写成 200 字左右的短文，语言流畅，只输出文章。\",\n    )\n    reviewer = create_agent(\n        \"reviewer\",\n        \"你是评审 Agent：检查文章是否跑题、结构是否清晰，给出 1-3 条具体修改意见，只输出意见。\",\n    )\n\n    result = await sequential_pipeline(\n        agents=[planner, writer, reviewer],\n        msg=Msg(\"user\", \"写一篇介绍多智能体系统的短文\", \"user\"),\n    )\n    print(\"最终输出（评审意见）:\")\n    print(result.content)\n\n\nasyncio.run(main())",
+          "expected_output": "控制台依次出现三条流水线产物：planner 的大纲要点 → writer 的短文 → reviewer 的修改意见，最后打印『最终输出（评审意见）:』加上 review 内容",
+          "steps": [
+            "保存为 content_pipeline.py 并运行，观察三段输出",
+            "把主题换成自己感兴趣的方向，重跑验证流水线可复用",
+            "新增一个校对 Agent（proofreader）并加入 agents 列表，体会扩展方式",
+            "把 reviewer 的意见作为提示词再喂给 writer 一轮，实现『写-评-改』循环"
+          ],
+          "pitfalls": [
+            "某一步输出为空/答非所问：多半是 sys_prompt 没写『只输出什么』，下游收到脏数据",
+            "结果太长或太短：在 sys_prompt 里加字数约束（如『200 字左右』）",
+            "一次性写完整流水线再调：先单 Agent 验证，再串联，出错才找得到是哪一环",
+            "并发限流：如果加了并行环节报 429，改用 enable_gather=False 或降并发"
+          ],
+          "key_points": [
+            "完整应用 = create_agent 工厂 + sequential_pipeline 串联，代码即模板",
+            "控制 Agent 输出靠 sys_prompt 的『只输出……』约束",
+            "扩展 = 加 Agent 并加入 agents 列表；『写-评-改』循环是评审型应用的基本盘"
+          ]
+        },
+        {
+          "title": "工程加固与调试：超时、日志、可视化",
+          "body": "demo 能跑只是第一步，真实使用要面对网络抖动、模型超时、参数错误。养成三个工程习惯：第一，模型调用设置合理的超时与重试策略，避免一次请求卡住整条流水线；第二，打开/记录日志，出问题时能看清每个 Agent 的输入输出与调用链；第三，用 stream_printing_messages 观察运行中的中间消息——它把 Agent 打印的消息转成异步生成器，让你实时看到『卡在哪一步、传了什么』。\n\n调试多智能体系统的心法一句话：先定位到具体 Agent，再把它当单 Agent 调。协作层的问题（消息没传对、格式不对）和单 Agent 的问题（提示词不好、模型输出不稳定）分开排查，效率最高。\n\nAgentScope 还有可视化工具 AgentScope Studio 可以观察多智能体运行过程，大项目调试必备；具体参数与界面以官方文档为准。记住：超时、日志、可视化是默认配置，不是出了问题才补。",
+          "code": "import os\nimport asyncio\nfrom agentscope.agent import ReActAgent\nfrom agentscope.formatter import DashScopeMultiAgentFormatter\nfrom agentscope.message import Msg\nfrom agentscope.model import DashScopeChatModel\nfrom agentscope.pipeline import sequential_pipeline, stream_printing_messages\n\n\ndef create_agent(name: str, role: str) -> ReActAgent:\n    return ReActAgent(\n        name=name,\n        sys_prompt=role,\n        model=DashScopeChatModel(model_name=\"qwen-max\", api_key=os.environ[\"DASHSCOPE_API_KEY\"]),\n        formatter=DashScopeMultiAgentFormatter(),\n    )\n\n\nasync def main() -> None:\n    planner = create_agent(\"planner\", \"把主题拆成大纲，只输出大纲。\")\n    writer = create_agent(\"writer\", \"根据大纲写短文，只输出文章。\")\n\n    # 关闭终端直接打印，改用流式观察，看清每一条中间消息\n    for a in (planner, writer):\n        a.set_console_output_enabled(False)\n\n    async for msg, last in stream_printing_messages(\n        agents=[planner, writer],\n        coroutine_task=sequential_pipeline(\n            agents=[planner, writer],\n            msg=Msg(\"user\", \"介绍什么是 Agent\", \"user\"),\n        ),\n    ):\n        print(f\"[{msg.name}] {msg.content}\")\n        if last:\n            print(\"--- 本条消息结束 ---\")\n\n\nasyncio.run(main())",
+          "expected_output": "按消息流实时打印：先是 planner 的输出（name=planner），再是 writer 的输出（name=writer），每条完整消息后跟一行分隔线；中间过程一览无余",
+          "steps": [
+            "运行代码，对比与直接 print 最终结果的差异，体会流式观察的价值",
+            "在 writer 的 sys_prompt 里故意写一个矛盾要求，运行后从消息流定位问题在哪个 Agent",
+            "把 stream_printing_messages 换成普通调用，对比两种调试方式"
+          ],
+          "pitfalls": [
+            "关闭了 console 输出但忘了用流式读取：会什么都看不到",
+            "流式消息过多：先观察，定位到问题 Agent 后再单 Agent 复现",
+            "把 stream_printing_messages 当成普通函数调用：它返回的是 async 生成器，必须 async for"
+          ],
+          "key_points": [
+            "工程三习惯：超时重试、日志、可视化观察，都是默认配置而非补救",
+            "调试心法：先定位具体 Agent，再当单 Agent 调；协作问题与单 Agent 问题分开排查",
+            "stream_printing_messages 用 async for 消费，实时看中间消息"
+          ]
+        }
+      ],
+      "resources": [
+        {
+          "title": "官方示例 · 多智能体应用",
+          "url": "https://doc.agentscope.io/tutorial/workflow_debate.html",
+          "tier": "official",
+          "type": "example",
+          "note": "官方多智能体协作示例，参考其分工与消息流转设计"
+        },
+        {
+          "title": "官方文档 · 管道进阶",
+          "url": "https://doc.agentscope.io/tutorial/task_pipeline.html",
+          "tier": "official",
+          "type": "tutorial",
+          "note": "Sequential/Fanout 管道 + stream_printing_messages 的完整官方用法"
+        },
+        {
+          "title": "官方文档 · AgentScope Studio",
+          "url": "https://doc.agentscope.io/features/studio.html",
+          "tier": "official",
+          "type": "docs",
+          "note": "可视化调试工具，大项目必备"
+        },
+        {
+          "title": "官方文档 · 工程实践与 FAQ",
+          "url": "https://doc.agentscope.io/faq/faq.html",
+          "tier": "official",
+          "type": "docs",
+          "note": "常见错误与工程配置参考，遇到问题先查这里"
+        }
+      ],
+      "practice": [
+        "实现『策划-写作-评审』三 Agent 协作流水线并跑通，换一个自己的主题",
+        "为流水线加入流式观察（stream_printing_messages），故意制造一处错误并用消息流定位",
+        "扩展应用：新增第 4 个 Agent（校对或配图建议），加入 agents 列表并调整顺序",
+        "写一篇 500 字的小短文记录你的设计、踩坑与调试过程"
+      ],
+      "quiz": [
+        "为什么先单独跑通每个 Agent 再组装流水线？",
+        "在代码里，新增一个 Agent 最少要改哪几处？（写出具体改动）",
+        "stream_printing_messages 返回什么？用什么语法消费它？",
+        "如果 reviewer 反馈『文章跑题了』，你会先怀疑哪一环？怎么用消息流验证？",
+        "应用题：把『策划-写作-评审』改成『调研-写作-校对-发布』四 Agent 流程，pipeline 的 agents 列表怎么写？"
+      ],
+      "checklist": [
+        "能独立完成一个三 Agent 协作应用并跑通（不抄代码）",
+        "能用 stream_printing_messages 观察消息流并定位问题 Agent",
+        "能给应用新增一个 Agent 并调整管道顺序，不改动既有 Agent 的代码",
+        "能向别人讲清自己的应用：每个 Agent 负责什么、消息怎么流转"
+      ]
+    },
+    {
+      "level": "L4",
+      "title": "进阶深化：记忆、工具与工程化",
+      "dependency": "需先完成 L3（能独立搭建完整协作应用）。",
+      "objective": "掌握记忆、工具调用、多模型接入与工程化调优，让应用具备记忆与行动能力，达到『熟练掌握』水平",
+      "duration": "预计 6~10 小时",
+      "lessons": [
+        {
+          "title": "给 Agent 加上记忆：跨轮对话不健忘",
+          "body": "到目前为止，你创建的 Agent 每次对话都是『单次思考』：消息传给它，它回答，然后忘掉。真实应用需要 Agent 记住用户身份、偏好、之前讨论过的结论。AgentScope 用 Memory 机制解决这个问题。\n\n官方 memory 模块提供多种记忆实现，最常用的是 TemporaryMemory（临时记忆，会话内存）和 AssistantMsgMemory。用法极简：创建记忆对象，作为 memory 参数传给 Agent 构造函数。此后 Agent 的对话历史会自动存入记忆，下一轮调用时它能看到之前的交流。\n\n理解记忆的边界很重要：记忆默认是『会话级』的，进程结束即清空（TemporaryMemory 是内存实现）；需要持久化时要用带存储后端的记忆实现，具体以官方文档为准。给 Agent 加记忆后，你的应用从『无状态问答』升级为『有状态助手』——这是从 demo 到产品的关键一步。",
+          "code": "import os\nimport asyncio\nfrom agentscope.agent import ReActAgent\nfrom agentscope.formatter import DashScopeMultiAgentFormatter\nfrom agentscope.memory import TemporaryMemory\nfrom agentscope.model import DashScopeChatModel\n\n\nasync def main() -> None:\n    # 1. 创建记忆：TemporaryMemory 是官方内存型记忆\n    memory = TemporaryMemory()\n\n    # 2. 把记忆注入 Agent，之后对话历史自动累积\n    agent = ReActAgent(\n        name=\"assistant\",\n        sys_prompt=\"你是一个耐心的学习助手。\",\n        model=DashScopeChatModel(model_name=\"qwen-max\", api_key=os.environ[\"DASHSCOPE_API_KEY\"]),\n        formatter=DashScopeMultiAgentFormatter(),\n        memory=memory,\n    )\n\n    # 3. 两轮对话：第二轮 Agent 能回忆起第一轮的内容\n    await agent(\"我叫小明，正在学多智能体系统。\")\n    reply = await agent(\"你还记得我叫什么吗？我们在学什么？\")\n    print(reply.content)\n\n\nasyncio.run(main())",
+          "expected_output": "第二轮回复中能正确说出『小明』和『多智能体系统』——证明记忆机制生效；如果第二轮回『我不知道』，检查记忆对象是否注入",
+          "steps": [
+            "运行代码，确认第二轮能回忆起第一轮的信息",
+            "把 memory 参数删掉再跑：第二轮会答不上来，直观感受『无记忆 vs 有记忆』",
+            "改用 AssistantMsgMemory 再跑一次，对比两种记忆的行为差异（以官方文档说明为准）"
+          ],
+          "pitfalls": [
+            "忘了传 memory 参数：Agent 默认无记忆，跨轮对话自然不记得",
+            "误以为记忆会自动持久化：TemporaryMemory 是内存实现，进程结束即清空",
+            "多 Agent 各用各的记忆：协作场景要让下游 Agent 看到上游结论，靠消息传递而非各自记忆"
+          ],
+          "key_points": [
+            "Memory 让 Agent 跨轮对话有记忆：memory=TemporaryMemory() 一行注入",
+            "记忆默认会话级、内存实现；持久化需要带存储后端的实现，以官方文档为准",
+            "协作记忆靠消息流，单 Agent 记忆靠 Memory，两者分工不同"
+          ]
+        },
+        {
+          "title": "给 Agent 工具：能查天气、能算数、能干活",
+          "body": "Agent 只会说话是不够的，真实任务需要它『行动』：查天气、搜资料、调用内部 API。AgentScope 的 ReActAgent 支持工具调用：你用 @tool 装饰器把任意 Python 函数声明为工具，模型在思考后会决定『调用哪个工具、传什么参数』，拿到结果再继续回答。\n\n这是 ReAct（Reasoning+Acting）的真正威力：模型先推理，发现『要回答这个问题，我得先查数据』，于是调用工具，观察结果，再组织回答。官方 create_react_agent 教程有完整示例：定义一个 @tool 函数，把函数名传进 ReActAgent 的 tools 参数。\n\n工具函数要写得『对模型友好』：函数名和 docstring 描述要清楚（模型靠这些决定何时调用），参数名要有意义。这是工具调用的黄金法则——工具是给模型用的 API，接口设计要以模型能理解为准。",
+          "code": "import os\nimport asyncio\nfrom agentscope.agent import ReActAgent\nfrom agentscope.formatter import DashScopeMultiAgentFormatter\nfrom agentscope.model import DashScopeChatModel\nfrom agentscope.tools import tool\n\n\n# 1. 用 @tool 把普通函数声明为 Agent 可调用的工具\n@tool\nasync def get_weather(city: str) -> str:\n    \"\"\"查询指定城市的天气，参数 city 为城市名（中文）。\"\"\"\n    # 此处仅为演示返回固定结果；真实场景可接入天气 API\n    return f\"{city} 今天晴，25 度，适合学习。\"\n\n\nasync def main() -> None:\n    agent = ReActAgent(\n        name=\"assistant\",\n        sys_prompt=\"你是一个能查天气的助手，需要天气信息时使用 get_weather 工具。\",\n        model=DashScopeChatModel(model_name=\"qwen-max\", api_key=os.environ[\"DASHSCOPE_API_KEY\"]),\n        formatter=DashScopeMultiAgentFormatter(),\n        tools=[get_weather],  # 2. 把工具列表传给 Agent\n    )\n\n    reply = await agent(\"杭州今天天气怎么样？\")\n    print(reply.content)\n\n\nasyncio.run(main())",
+          "expected_output": "Agent 先调用 get_weather('杭州') 工具，再把工具返回的天气信息组织成回答打印出来——可以看到中间出现了工具调用过程",
+          "steps": [
+            "运行代码，观察 Agent 是否先调用工具再回答",
+            "问一个工具无法回答的问题（如『明天呢』），观察 Agent 的应对方式",
+            "自己写一个 @tool 函数（如加法器），让 Agent 用工具算数，体会工具调用闭环"
+          ],
+          "pitfalls": [
+            "忘了在 sys_prompt 里提示工具存在：模型可能不主动调用",
+            "工具 docstring 写得太含糊：模型不知道何时该调用，接口要清晰",
+            "工具函数是普通 def 却 await：@tool 支持 async 函数，调用方会 await；保持 async def 与 await 一致性"
+          ],
+          "key_points": [
+            "@tool 装饰器 + tools=[...] 参数 = Agent 获得行动能力",
+            "ReAct 流程：思考 → 调用工具 → 观察结果 → 组织回答",
+            "工具即 API，函数名/docstring/参数名要按『模型能理解』的标准设计"
+          ]
+        },
+        {
+          "title": "认识 Agent Skill：设计一个技能包",
+          "body": "上一节你学会了给 Agent 工具（Tool），这一节学一个更高级的概念：Agent Skill（智能体技能）。Skill 是 Anthropic 提出的一套方法，用来提升 Agent 在特定任务上的表现：把一个任务的『做法』——指令、脚本、参考资源——打包成一个文件夹，用其中的 SKILL.md 文件描述怎么用。可以把它想成一本『操作手册』：手册本身不干活，但 Agent 遇到对应任务时，会先翻开手册（读 SKILL.md），再按手册里的步骤行动。\n\nSkill 和 Tool 的关键区别要分清楚：Tool 是一个『可调用的函数』，Agent 思考后直接调用它（比如查天气）；Skill 不是工具，Agent 不能直接调用它——Agent 必须先读取 SKILL.md 里的指引，再『按照指引』使用自己已有的工具去完成任务。所以官方文档明确说：Skills are not tools，the agent cannot call a skill directly。一个 Skill 本质上是一段高质量、可复用的『做法说明书』，把提示词工程固化成可插拔的单元。\n\n设计一个 Skill，就是设计它的文件夹。目录结构很简单：一个文件夹 + 一个 SKILL.md。官方要求 SKILL.md 必须包含 YAML frontmatter（name 和 description 两个字段，写在开头的 --- 之间）和正文指令。description 决定 Agent 什么时候选用这个技能（模型靠它判断『这个任务匹配哪个技能』），所以描述要写清楚『这个技能解决什么问题、什么时候用』；正文是给 Agent 看的操作指引，要步骤化、可执行，就像写给同事的工作交接文档。\n\n下面用 Python 代码演示如何创建这样一个技能目录（这也是官方示例的写法）：先建文件夹，再把 SKILL.md 写进去。注意 YAML frontmatter 的格式：--- 开头、--- 结束，里面 name 和 description 各占一行。",
+          "code": "import os\n\n# 1. 创建技能目录 sample_skill\nos.makedirs(\"sample_skill\", exist_ok=True)\n\n# 2. 写入官方要求的 SKILL.md：YAML frontmatter（name/description）+ 正文指令\nwith open(\"sample_skill/SKILL.md\", \"w\", encoding=\"utf-8\") as f:\n    f.write(\n        \"\"\"---\nname: sample_skill\ndescription: A sample agent skill for demonstration.\n---\n\n# Sample Skill\n\n这是一个演示技能。当用户的问题与示例相关时，遵循本文件的指引：\n1. 先向用户确认需求细节。\n2. 用简洁的中文回答，并给出示例。\n\"\"\"\n    )\n\nprint(\"技能目录已创建:\")\nfor root, dirs, files in os.walk(\"sample_skill\"):\n    for name in files:\n        print(os.path.join(root, name))",
+          "expected_output": "打印一行『技能目录已创建:』和路径 sample_skill\\SKILL.md —— 你的第一个技能包做好了",
+          "steps": [
+            "运行代码，确认 sample_skill/SKILL.md 已创建",
+            "打开 SKILL.md，对照它的结构：--- 之间的 YAML frontmatter（name、description）+ 正文指令",
+            "把 description 改成你自己的技能描述（例如『A skill for writing meeting minutes』），体会描述如何决定 Agent 何时选用",
+            "在正文里加一条步骤，模拟扩展一个技能的做法"
+          ],
+          "pitfalls": [
+            "忘记 YAML frontmatter：SKILL.md 不以 --- 开头的 name/description 开头，注册时可能解析失败或提示词里缺少技能描述",
+            "description 写得太泛：模型无法判断何时该用这个技能，技能就『永远不被选用』",
+            "把 Skill 当成 Tool 调用：Skill 不是可调用函数，Agent 是通过读取 SKILL.md 再行动，不是直接调用",
+            "正文写得太抽象：Agent 需要可执行的步骤，『好好回答』不如『先确认需求、再分三步回答』"
+          ],
+          "key_points": [
+            "Agent Skill = 把任务做法打包成文件夹：SKILL.md 里是 YAML frontmatter（name/description）+ 操作指引",
+            "Skill 不是 Tool：Agent 不能直接调用 Skill，而是读 SKILL.md 后按指引行动",
+            "description 决定技能何时被选用，正文决定怎么执行——设计 Skill 就是设计这两段文本"
+          ]
+        },
+        {
+          "title": "加载与使用 Agent Skill：Toolkit 注册 + ReActAgent 集成",
+          "body": "设计好技能包之后，要让它真正进入 Agent 的『视野』。AgentScope 通过 Toolkit 类提供对 Agent Skills 的内置支持，相关 API 只有三个：register_agent_skill（从给定目录注册技能）、remove_agent_skill（按名称移除技能）、get_agent_skill_prompt（生成所有已注册技能的提示词文本，可附加到系统提示词）。\n\n使用流程分三步。第一步，创建 Toolkit 实例；第二步，用 register_agent_skill 把技能目录注册进去；第三步，把 Toolkit 作为 toolkit 参数传给 ReActAgent——官方文档明确：ReActAgent 会自动把已注册技能的提示词附加到系统提示词（system prompt）里，让 Agent 知道『我有哪些技能可用、什么时候该读哪本手册』。\n\n官方还允许你自定义提示词的排版：创建 Toolkit 时可以传 agent_skill_instruction（向 Agent 介绍技能是什么的一段开场白）和 agent_skill_template（每个技能的格式化模板，模板里必须包含 {name}、{description}、{dir} 三个占位符）。不传就用官方默认模板，先学会默认用法再自定义。\n\n一个非常重要的前提：使用技能时，Agent 必须能读到 SKILL.md 文件的内容——所以官方文档强调，用技能的 Agent 必须配备文本文件读取工具或 shell 命令工具（这正是上一节 @tool 的用武之地）。把这两节连起来看：Skill 负责『告诉 Agent 怎么做』，Tool 负责『让 Agent 做得到』，二者配合才是完整的技能体系。\n\n下面是官方 task_agent_skill 教程的完整写法（整理为可运行脚本）：创建技能目录 → Toolkit 注册 → 传入 ReActAgent。运行后打印 agent.sys_prompt，你会看到系统提示词里自动多了一段『# Agent Skills』，列出了已注册的技能与它的 SKILL.md 路径。",
+          "code": "import os\nimport asyncio\nfrom agentscope.agent import ReActAgent\nfrom agentscope.formatter import DashScopeChatFormatter\nfrom agentscope.memory import InMemoryMemory\nfrom agentscope.model import DashScopeChatModel\nfrom agentscope.tool import Toolkit\n\n\nasync def main() -> None:\n    # 1. 准备技能目录（含 SKILL.md，见上一节）\n    os.makedirs(\"sample_skill\", exist_ok=True)\n    with open(\"sample_skill/SKILL.md\", \"w\", encoding=\"utf-8\") as f:\n        f.write(\n            \"\"\"---\nname: sample_skill\ndescription: A sample agent skill for demonstration.\n---\n\n# Sample Skill\n\n这是一个演示技能。当用户的问题与示例相关时，遵循本文件的指引。\n\"\"\"\n        )\n\n    # 2. 创建 Toolkit 并注册技能\n    toolkit = Toolkit()\n    toolkit.register_agent_skill(\"sample_skill\")\n\n    # 3. 查看生成的技能提示词（可附加到系统提示词）\n    agent_skill_prompt = toolkit.get_agent_skill_prompt()\n    print(\"Agent Skill Prompt:\")\n    print(agent_skill_prompt)\n\n    # 4. 把 Toolkit 传给 ReActAgent：技能提示词会自动进入系统提示词\n    agent = ReActAgent(\n        name=\"Friday\",\n        sys_prompt=\"You are a helpful assistant named Friday.\",\n        model=DashScopeChatModel(model_name=\"qwen-max\", api_key=os.environ[\"DASHSCOPE_API_KEY\"]),\n        formatter=DashScopeChatFormatter(),\n        memory=InMemoryMemory(),\n        toolkit=toolkit,\n    )\n\n    # 5. 验证：系统提示词中已包含技能说明\n    print(\"\\nAgent's System Prompt with Agent Skills:\")\n    print(agent.sys_prompt)\n\n    reply = await agent(\"你好，请用一句话介绍你自己\")\n    print(\"\\n回复:\", reply.content)\n\n\nasyncio.run(main())",
+          "expected_output": "先打印 Toolkit 生成的技能提示词（# Agent Skills 段，含 sample_skill 与 SKILL.md 路径），再打印 Agent 的系统提示词——末尾多了一段技能说明；最后是 Agent 的正常回复",
+          "steps": [
+            "运行完整脚本，对比 agent_skill_prompt 与 agent.sys_prompt 两段输出，确认技能提示词已自动附加",
+            "把 Toolkit 换成自定义模板：Toolkit(agent_skill_instruction='<system-info>...</system-info>\\n', agent_skill_template='- {name}({dir}): {description}')，再看输出格式变化",
+            "调用 toolkit.remove_agent_skill('sample_skill') 后重新生成提示词，观察技能消失",
+            "给这个 Agent 配一个 @tool 文本读取工具（参考上一节），体会『Skill 指引 + Tool 执行』的配合"
+          ],
+          "pitfalls": [
+            "忘了把 toolkit 传给 ReActAgent：技能注册了但 Agent 的提示词里没有，Agent 根本不知道技能存在",
+            "SKILL.md 缺 frontmatter：技能描述缺失，Agent 无法判断何时选用",
+            "Agent 没有文本读取/shell 工具：Agent 知道技能存在但读不了 SKILL.md，技能形同虚设",
+            "自定义模板漏了 {name}/{description}/{dir} 占位符：格式化时会报错或输出异常",
+            "register 的路径写错：目录不存在会报错，确认相对/绝对路径正确"
+          ],
+          "key_points": [
+            "三 API：register_agent_skill / remove_agent_skill / get_agent_skill_prompt，都在 Toolkit 上",
+            "ReActAgent(toolkit=toolkit) 会自动把技能提示词附加进系统提示词，无需手动拼接",
+            "技能生效的前提：Agent 配有文本读取或 shell 工具；Skill 指引方向，Tool 提供能力",
+            "自定义模板 agent_skill_instruction / agent_skill_template 可定制提示词排版，模板需含三个占位符"
+          ]
+        },
+        {
+          "title": "多模型接入：换模型只改一行",
+          "body": "AgentScope 的模型层是抽象化的：Agent 不直接依赖某个厂商 SDK，而是依赖 model 对象。想换模型，只需替换构造时的 model 参数。官方 model 模块提供 DashScopeChatModel（默认示例用的 qwen）、OpenAI 兼容模型、以及各类 embedding 模型（如 OpenAIEmbedding、DashScopeTextEmbedding）。\n\n接入本地/自部署模型（如 Ollama）通常走 OpenAI 兼容协议：通过 base_url 指向本地服务地址即可，无需改业务代码。这样你可以『开发用本地小模型省钱、上线换云端大模型』，模型切换成本几乎为零。\n\n进阶还常用 embedding 模型做『记忆的向量检索』——把消息内容转成向量，按语义相似度找回相关记忆。这一节只需知道：模型是插件化的，embedding 也是模型的一种；具体接入参数（base_url、model_name）以官方 model 教程为准。",
+          "code": "import os\nimport asyncio\nfrom agentscope.agent import ReActAgent\nfrom agentscope.formatter import DashScopeMultiAgentFormatter\nfrom agentscope.model import DashScopeChatModel\n\n\ndef build_agent(model_name: str, api_key: str) -> ReActAgent:\n    \"\"\"把模型封装成参数，切换模型时只改调用处\"\"\"\n    return ReActAgent(\n        name=\"assistant\",\n        sys_prompt=\"你是简洁的助手，用中文回答。\",\n        model=DashScopeChatModel(model_name=model_name, api_key=api_key),\n        formatter=DashScopeMultiAgentFormatter(),\n    )\n\n\nasync def main() -> None:\n    # 换模型 = 换一个参数：qwen-max 换成 qwen-plus 或 qwen-turbo（更便宜更快）\n    agent = build_agent(\"qwen-plus\", os.environ[\"DASHSCOPE_API_KEY\"])\n    reply = await agent(\"一句话介绍你自己用的模型\")\n    print(reply.content)\n\n\nasyncio.run(main())",
+          "expected_output": "打印一段正常的中文回答；把 model_name 换成 qwen-turbo 再跑，回答质量与速度会有差异——体验模型切换",
+          "steps": [
+            "运行代码，把 model_name 依次换成 qwen-turbo / qwen-max，感受成本与质量的取舍",
+            "阅读官方 model 教程，找到接入 OpenAI 兼容模型（含 Ollama 本地模型）的写法",
+            "了解 OpenAIEmbedding / DashScopeTextEmbedding 的用途：向量化记忆检索"
+          ],
+          "pitfalls": [
+            "model_name 拼写错误：会直接报错或静默降级，以官方模型列表为准",
+            "本地模型地址写错：base_url 必须能连通，本地模型先 curl 验证再接入",
+            "误以为 embedding 和 chat 是同一个模型：用途不同，按官方文档分别配置"
+          ],
+          "key_points": [
+            "模型是插件化的：换模型只改 model 参数，业务代码不动",
+            "本地模型走 OpenAI 兼容协议（base_url），开发省钱、上线换大模型",
+            "embedding 模型用于向量检索记忆，是进阶能力"
+          ]
+        },
+        {
+          "title": "工程化调优：超时、重试、并发与成本",
+          "body": "从 demo 到上线，工程化是必经之路。四个核心维度：\n\n第一，超时与重试。模型调用是网络 IO，必然可能超时失败。为模型配置合理的超时时间与重试策略，避免一次慢请求卡死整条流水线；重试要有上限和退避，防止雪崩。第二，并发与限流。多 Agent 并行（fanout）能提速，但会放大对模型服务的请求压力——注意 API 配额，超限时降低并发或开启队列。第三，成本。模型按 token 计费，控制成本的关键是：选对模型档位（turbo/plus/max）、精简 sys_prompt 与上下文、避免无意义的重复调用。第四，日志与观测。把每个 Agent 的输入输出、耗时、token 用量记录下来，出问题能复盘，也能量化成本。\n\nAgentScope 提供 AgentScope Studio 等可视化工具观察多智能体运行过程，是排查复杂协作问题的重要帮手；超时、重试等参数的配置方式以官方工程化文档为准。工程化的原则一句话：让系统在真实网络环境下『可预期地慢，而不是随机地挂』。",
+          "steps": [
+            "给模型调用配置超时时间与有限次重试（参数名称以官方文档为准）",
+            "把 fanout_pipeline 的 enable_gather 打开/关闭，观察并发对耗时与限流的影响",
+            "在代码里打印每个 Agent 的耗时，估算一次完整流水线的成本量级",
+            "浏览 AgentScope Studio 文档，了解可视化调试的入口与能力"
+          ],
+          "pitfalls": [
+            "无限重试：模型持续失败时重试会放大成本与延迟，必须设上限与退避",
+            "并发无节制：API 限流（429）时先降并发，再考虑扩容",
+            "只关注功能不看成本：先跑通，再量化 token 消耗，上线前定预算"
+          ],
+          "key_points": [
+            "工程四维：超时重试、并发限流、成本控制、日志观测",
+            "重试有上限有退避；并发超限先降并发；成本靠选档与精简上下文",
+            "AgentScope Studio 用于可视化调试，配置参数以官方文档为准"
+          ]
+        }
+      ],
+      "resources": [
+        {
+          "title": "官方文档 · Memory 记忆",
+          "url": "https://doc.agentscope.io/features/memory.html",
+          "tier": "official",
+          "type": "docs",
+          "note": "记忆机制的官方说明，含各记忆实现与用法"
+        },
+        {
+          "title": "官方文档 · 创建 ReAct 智能体（含工具）",
+          "url": "https://doc.agentscope.io/tutorial/create_react_agent.html",
+          "tier": "official",
+          "type": "tutorial",
+          "note": "@tool 与 tools 参数的官方完整示例"
+        },
+        {
+          "title": "官方文档 · 模型 Model",
+          "url": "https://doc.agentscope.io/tutorial/model.html",
+          "tier": "official",
+          "type": "tutorial",
+          "note": "多模型接入、OpenAI 兼容与 embedding 的权威说明"
+        },
+        {
+          "title": "官方文档 · Agent Skill（技能）",
+          "url": "https://doc.agentscope.io/tutorial/task_agent_skill.html",
+          "tier": "official",
+          "type": "tutorial",
+          "note": "Skill 设计、注册与 ReActAgent 集成的官方教程，含完整可下载源码"
+        },
+        {
+          "title": "官方文档 · AgentScope Studio",
+          "url": "https://doc.agentscope.io/features/studio.html",
+          "tier": "official",
+          "type": "docs",
+          "note": "可视化调试工具的官方文档"
+        },
+        {
+          "title": "官方文档 · 工程实践与 FAQ",
+          "url": "https://doc.agentscope.io/faq/faq.html",
+          "tier": "official",
+          "type": "docs",
+          "note": "常见错误、超时/重试等工程配置参考"
+        }
+      ],
+      "practice": [
+        "给 L3 的『策划-写作-评审』应用里加记忆：让评审 Agent 记住上次的修改意见",
+        "写一个 @tool 工具（如查询当前时间的函数）并让 Agent 使用它回答『现在几点』",
+        "设计一个自己的技能包（如『会议纪要』技能：写 SKILL.md，含 frontmatter 与分步指引），用 Toolkit 注册并让 ReActAgent 使用它",
+        "把应用的模型从 qwen-max 换成 qwen-turbo，量化一次运行的耗时与成本差异",
+        "为应用加入超时与有限重试配置，观察模拟故障时的行为（参数以官方文档为准）"
+      ],
+      "quiz": [
+        "给 Agent 加记忆最少需要改几处代码？TemporaryMemory 的记忆生命周期是什么？",
+        "@tool 装饰器的作用是什么？为什么工具的函数名与 docstring 要写清楚？",
+        "Agent Skill 和 Tool 的区别是什么？为什么说『Agent 不能直接调用 Skill』？",
+        "注册一个技能最少要几步？ReActAgent 怎么才能看到技能提示词？",
+        "换一个模型厂商需要改哪些代码？本地模型一般通过什么协议接入？",
+        "并发并行能显著提速，为什么还要小心？遇到 429 应该怎么做？",
+        "应用题：你的客服 Agent 需要『记住用户历史订单 + 查询最新物流 + 按公司话术模板回复』，分别用什么机制？"
+      ],
+      "checklist": [
+        "能给 Agent 注入记忆，并验证跨轮对话能回忆起之前的信息",
+        "能用 @tool 定义工具并让 Agent 自主调用",
+        "能设计一个含 YAML frontmatter 的 SKILL.md 技能包，并用 Toolkit 注册到 ReActAgent",
+        "能切换模型档位/厂商，明白成本与质量的取舍",
+        "能为应用配置超时重试与并发控制，理解限流应对策略"
+      ]
+    }
+  ],
+  "help": [
+    "官方文档站（权威优先）：https://doc.agentscope.io/ —— 教程与 FAQ 页面覆盖绝大多数问题",
+    "GitHub Issues（报错求助）：https://github.com/agentscope-ai/agentscope/issues —— 搜关键词或开新 Issue，附完整报错",
+    "官方社区：GitHub Discussions https://github.com/agentscope-ai/agentscope/discussions 与官方 Discord 群",
+    "关键口诀：报错先看消息流定位到具体 Agent，再对照官方 pipeline 教程的代码逐行核对"
+  ],
+  "tips": [
+    "先跑官方示例再读原理：AgentScope 官方文档的示例质量很高，动手优先",
+    "本教程所有代码基于官方稳定版文档（doc.agentscope.io）真实 API，可直接照敲；运行前确认你的 agentscope 版本与文档一致",
+    "术语对照见总览『术语表』：Agent=智能体，Msg=消息，Pipeline=管道，MsgHub=消息中心，ReAct=思考-行动循环",
+    "L0-L1 一天内可完成，L2-L3 建议 1~2 周；卡住时先查求助路径，再回看对应阶段文档",
+    "学到 L3 后，把你的『写-评-改』应用扩展成自己的项目，比多学十篇教程更有用"
+  ]
+}

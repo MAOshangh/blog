@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>前置补学 · 大模型与 API 基础概念</title>
+<style>
+/* knowledge-learning-path 共享样式 */
+:root { --ink:#1f2937; --sub:#6b7280; --line:#e5e7eb; --bg:#f9fafb; --acc:#0f766e; --acc2:#0369a1; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif; color:var(--ink); background:var(--bg); line-height:1.75; }
+.wrap { max-width:960px; margin:0 auto; padding:32px 20px 64px; }
+header { border-bottom:2px solid var(--line); padding-bottom:20px; margin-bottom:24px; }
+h1 { font-size:28px; margin:0 0 8px; }
+.goal { color:var(--acc); font-weight:600; margin:0 0 4px; }
+.meta { color:var(--sub); font-size:13px; }
+.stats { display:inline-block; margin-top:10px; padding:4px 12px; background:#eef2f2; border-radius:20px; color:var(--acc2); font-size:13px; }
+h2 { font-size:22px; margin:36px 0 12px; }
+.summary { color:var(--sub); }
+a { color:var(--acc2); text-decoration:none; }
+a:hover { text-decoration:underline; }
+/* 导航条 */
+.nav { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:0 0 20px; padding:10px 14px; background:#fff; border:1px solid var(--line); border-radius:10px; font-size:14px; }
+.nav a { font-weight:600; }
+.nav .spacer { color:var(--sub); }
+/* 知识地图 */
+.map-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+.map-item { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+.map-item b { display:block; color:var(--acc2); margin-bottom:4px; }
+.map-item span { font-size:13px; color:var(--sub); }
+/* 阶段导航卡片（总览页） */
+.phase-cards { display:grid; gap:12px; }
+.phase-card { display:block; background:#fff; border:1px solid var(--line); border-left:4px solid var(--acc); border-radius:10px; padding:14px 16px; color:var(--ink); }
+.phase-card:hover { border-color:var(--acc2); text-decoration:none; }
+.phase-card .pc-head { display:flex; align-items:center; gap:10px; }
+.phase-card .lvl { background:var(--acc); color:#fff; font-weight:700; font-size:13px; padding:4px 8px; border-radius:6px; }
+.phase-card h3 { margin:0; font-size:16px; }
+.phase-card .dur { margin-left:auto; color:var(--sub); font-size:12px; white-space:nowrap; }
+.phase-card p { margin:6px 0 0; font-size:13px; color:var(--sub); }
+/* 阶段页 */
+.phase-head { display:flex; align-items:flex-start; gap:12px; border-bottom:1px dashed var(--line); padding-bottom:12px; margin-bottom:16px; }
+.phase-head .lvl { flex-shrink:0; background:var(--acc); color:#fff; font-weight:700; font-size:14px; padding:6px 10px; border-radius:8px; }
+.phase-head h3 { margin:0; font-size:18px; }
+.phase-head .obj { margin:4px 0 0; color:var(--ink); }
+.phase-head .dur { margin-left:auto; flex-shrink:0; color:var(--sub); font-size:13px; white-space:nowrap; }
+/* lessons */
+.lesson { border:1px solid var(--line); border-radius:10px; margin:14px 0; padding:16px 18px; background:#fcfdfd; }
+.lesson h4 { margin:0 0 10px; font-size:16px; color:var(--acc2); }
+.lesson p { margin:0 0 10px; }
+.lesson p:last-child { margin-bottom:0; }
+pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow-x:auto; font-size:13px; line-height:1.6; margin:10px 0; }
+pre code { font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace; }
+.steps, .pitfalls, .points { margin:10px 0 0; padding:10px 14px; border-radius:8px; }
+.steps { background:#eff6ff; border-left:4px solid var(--acc2); }
+.steps b, .points b { color:var(--acc2); display:block; margin-bottom:4px; }
+.steps ol { margin:0; padding-left:20px; }
+.pitfalls { background:#fff7ed; border-left:4px solid #c2410c; }
+.pitfalls b { color:#9a3412; display:block; margin-bottom:4px; }
+.pitfalls ul { margin:0; padding-left:20px; }
+.points { background:#f0fdf4; border-left:4px solid #15803d; }
+.points ul { margin:0; padding-left:20px; }
+/* resources / practice / quiz */
+h4 { margin:16px 0 8px; font-size:15px; color:var(--acc2); }
+.res table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { background:#f3f4f6; }
+td:first-child { width:40%; }
+td:nth-child(2) { width:14%; }
+.tier { display:inline-block; font-size:11px; color:#fff; padding:1px 8px; border-radius:10px; margin-left:6px; vertical-align:middle; }
+.prac ol { margin:0; padding-left:20px; }
+.quiz ul { margin:0; padding-left:20px; }
+.tips { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 20px; }
+.tips ul { margin:0; padding-left:20px; }
+/* 前置知识检查 */
+.prereq { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:10px 0; }
+.pr-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.pr-head b { font-size:15px; }
+.nec { font-size:11px; color:#fff; padding:2px 10px; border-radius:10px; }
+.nec.must { background:#b45309; }
+.nec.should { background:#0369a1; }
+.pr-row { font-size:13px; color:var(--sub); margin-top:4px; }
+.pr-label { display:inline-block; min-width:72px; color:var(--acc2); font-weight:600; }
+/* 前置补学链接（总览卡片内） */
+.pr-guide { margin-top:8px; font-size:13px; }
+.pr-guide a { font-weight:600; }
+/* 前置补学链接区（阶段页顶部） */
+.prereq-links { background:#eff6ff; border:1px solid #bfdbfe; border-left:4px solid var(--acc2); border-radius:8px; padding:10px 14px; margin:0 0 16px; font-size:14px; }
+.prereq-links b { color:var(--acc2); display:block; margin-bottom:4px; }
+.prereq-links ul { margin:0; padding-left:20px; }
+.prereq-links li { margin:2px 0; }
+/* 阶段前置依赖提示 */
+.dep-hint { background:#fffbeb; border:1px solid #fcd34d; border-left:4px solid #d97706; border-radius:8px; padding:10px 14px; margin:0 0 16px; font-size:14px; }
+/* 术语表 */
+.glossary { width:100%; border-collapse:collapse; font-size:14px; margin:8px 0; }
+.glossary th, .glossary td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+.glossary .zh { color:var(--sub); font-size:12px; }
+/* 预期输出 */
+.expected { margin:0 0 10px; }
+.expected b { display:block; color:#15803d; font-size:13px; margin-bottom:4px; }
+.expected pre { background:#0f172a; color:#e2e8f0; border-radius:6px; padding:10px 14px; font-size:13px; overflow-x:auto; }
+/* 能力自检 */
+.checklist { background:#f0fdf4; border-left:4px solid #15803d; border-radius:8px; padding:10px 14px; margin:14px 0 0; }
+.checklist h4 { margin:0 0 6px; color:#15803d; }
+.checklist ul { margin:0; padding-left:20px; }
+/* 求助路径 */
+.help { background:#fff; border:1px dashed var(--line); border-radius:8px; padding:10px 14px; margin:16px 0 0; }
+.help h4 { margin:0 0 6px; color:var(--acc2); }
+.help ul { margin:0; padding-left:20px; }
+footer { margin-top:40px; color:var(--sub); font-size:12px; border-top:1px solid var(--line); padding-top:12px; }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <span><a href="../learning-guide-2026-09-23.html">← 回教程总览</a></span>
+  </div>
+
+  <header>
+    <h1>前置补学 · 大模型与 API 基础概念</h1>
+    <p class="goal">🎯 补学目标：用 2 个短小节弄懂大语言模型（LLM）与 API 调用模型：LLM 是什么、API Key 与一次请求-响应的全过程。预计 0.5~1 小时。</p>
+    <p class="meta">所属教程：AgentScope · 生成日期：2026-09-23 · 本页为前置知识补学 mini 教程，学完即可回到主教程继续</p>
+  </header>
+
+  <h2>补学内容</h2>
+  <div class="lesson"><h4>大语言模型（LLM）是什么</h4><p>大语言模型（Large Language Model，LLM）是经过海量文本训练的程序，核心能力是『根据前文预测下一个词』，逐词生成连贯的回复。可以把它想成一个读过海量书籍的『接话大师』：你给它一句话，它能顺着接出非常自然的下一句，接得足够多就成了完整回答。</p><p>现代 LLM（如 GPT、Qwen）不仅能接话，还能理解指令、推理、写代码、总结文档。但它不是数据库也不是搜索引擎：它『记得』的是训练时见过的规律，可能编造细节（幻觉）。在 Agent 场景里，LLM 充当智能体的『大脑』——接收消息、决定下一步做什么。理解这一点就明白为什么 Agent 需要模型：没有模型，Agent 只是个空壳。</p><div class="points"><b>要点</b><ul><li>LLM 是文本生成模型，根据前文预测下一个词</li><li>能理解指令、推理、写代码，但可能产生幻觉</li><li>Agent 用 LLM 当大脑：决定想什么、说什么、做什么</li></ul></div></div><div class="lesson"><h4>API 与 API Key：一次调用的全过程</h4><p>API（Application Programming Interface，应用程序接口）是程序之间通信的约定：你的代码向模型平台发一个 HTTP 请求，平台把模型生成的文本返回给你。整个流程是：你的程序带上『提示词（prompt）』和『身份凭证（API Key）』请求模型服务 → 平台把文本切成小块（token）让模型逐个生成 → 返回完整回复。token 是模型计费的最小单位，大致 1 个汉字约 1~2 个 token。</p><p>API Key 是你的身份凭证，就像门禁卡——只有带卡才能调用模型，调用按 token 计费。安全要点：Key 不要写进代码里提交到 GitHub，通常放到环境变量（教程中写作 <code>os.environ[&quot;DASHSCOPE_API_KEY&quot;]</code>），程序运行时从环境变量读取。AgentScope 帮你封装了这套请求-响应过程：你只需配置模型与 Key，框架负责发请求、组装对话、拿回回复，这就是教程 L0 要做的『准备模型』。</p><div class="steps"><b>操作步骤</b><ol><li>去模型平台（如阿里云百炼 DashScope）注册并创建 API Key</li><li>把 Key 设为环境变量（Windows：setx DASHSCOPE_API_KEY 你的Key；macOS/Linux：export DASHSCOPE_API_KEY=你的Key）</li><li>在主教程 L0 用 os.environ 读取并创建模型对象</li></ol></div><div class="pitfalls"><b>常见坑</b><ul><li>把 Key 写进代码或提交到公开仓库：会被盗用产生费用</li><li>环境变量名拼写不一致：程序报 KeyError 或鉴权失败</li><li>额度不足/欠费：请求返回 401 或余额错误，需到平台充值</li></ul></div><div class="points"><b>要点</b><ul><li>API = 程序调用模型服务的接口，发请求拿回复</li><li>token 是计费单位，1 个汉字约 1~2 token</li><li>API Key 是凭证，放环境变量、勿进代码库</li><li>AgentScope 封装调用细节，你只需配置模型与 Key</li></ul></div></div>
+
+  <div class="checklist" style="margin-top:16px"><h4>补学完成标准</h4><ul><li>能对照主教程「开始前检查」中对应项的自检标准逐条确认达标</li><li>达标后回到主教程总览页，从 L0 开始学习</li></ul></div>
+
+  <footer>由 knowledge-learning-path 技能生成 · 前置知识补学 · 内容以权威资料为准，具体 API/命令以官方文档最新版本为准</footer>
+</div>
+</body>
+</html>

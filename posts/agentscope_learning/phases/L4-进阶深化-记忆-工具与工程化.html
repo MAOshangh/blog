@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L4 进阶深化：记忆、工具与工程化 · AgentScope</title>
+<style>
+/* knowledge-learning-path 共享样式 */
+:root { --ink:#1f2937; --sub:#6b7280; --line:#e5e7eb; --bg:#f9fafb; --acc:#0f766e; --acc2:#0369a1; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif; color:var(--ink); background:var(--bg); line-height:1.75; }
+.wrap { max-width:960px; margin:0 auto; padding:32px 20px 64px; }
+header { border-bottom:2px solid var(--line); padding-bottom:20px; margin-bottom:24px; }
+h1 { font-size:28px; margin:0 0 8px; }
+.goal { color:var(--acc); font-weight:600; margin:0 0 4px; }
+.meta { color:var(--sub); font-size:13px; }
+.stats { display:inline-block; margin-top:10px; padding:4px 12px; background:#eef2f2; border-radius:20px; color:var(--acc2); font-size:13px; }
+h2 { font-size:22px; margin:36px 0 12px; }
+.summary { color:var(--sub); }
+a { color:var(--acc2); text-decoration:none; }
+a:hover { text-decoration:underline; }
+/* 导航条 */
+.nav { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:0 0 20px; padding:10px 14px; background:#fff; border:1px solid var(--line); border-radius:10px; font-size:14px; }
+.nav a { font-weight:600; }
+.nav .spacer { color:var(--sub); }
+/* 知识地图 */
+.map-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+.map-item { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+.map-item b { display:block; color:var(--acc2); margin-bottom:4px; }
+.map-item span { font-size:13px; color:var(--sub); }
+/* 阶段导航卡片（总览页） */
+.phase-cards { display:grid; gap:12px; }
+.phase-card { display:block; background:#fff; border:1px solid var(--line); border-left:4px solid var(--acc); border-radius:10px; padding:14px 16px; color:var(--ink); }
+.phase-card:hover { border-color:var(--acc2); text-decoration:none; }
+.phase-card .pc-head { display:flex; align-items:center; gap:10px; }
+.phase-card .lvl { background:var(--acc); color:#fff; font-weight:700; font-size:13px; padding:4px 8px; border-radius:6px; }
+.phase-card h3 { margin:0; font-size:16px; }
+.phase-card .dur { margin-left:auto; color:var(--sub); font-size:12px; white-space:nowrap; }
+.phase-card p { margin:6px 0 0; font-size:13px; color:var(--sub); }
+/* 阶段页 */
+.phase-head { display:flex; align-items:flex-start; gap:12px; border-bottom:1px dashed var(--line); padding-bottom:12px; margin-bottom:16px; }
+.phase-head .lvl { flex-shrink:0; background:var(--acc); color:#fff; font-weight:700; font-size:14px; padding:6px 10px; border-radius:8px; }
+.phase-head h3 { margin:0; font-size:18px; }
+.phase-head .obj { margin:4px 0 0; color:var(--ink); }
+.phase-head .dur { margin-left:auto; flex-shrink:0; color:var(--sub); font-size:13px; white-space:nowrap; }
+/* lessons */
+.lesson { border:1px solid var(--line); border-radius:10px; margin:14px 0; padding:16px 18px; background:#fcfdfd; }
+.lesson h4 { margin:0 0 10px; font-size:16px; color:var(--acc2); }
+.lesson p { margin:0 0 10px; }
+.lesson p:last-child { margin-bottom:0; }
+pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow-x:auto; font-size:13px; line-height:1.6; margin:10px 0; }
+pre code { font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace; }
+.steps, .pitfalls, .points { margin:10px 0 0; padding:10px 14px; border-radius:8px; }
+.steps { background:#eff6ff; border-left:4px solid var(--acc2); }
+.steps b, .points b { color:var(--acc2); display:block; margin-bottom:4px; }
+.steps ol { margin:0; padding-left:20px; }
+.pitfalls { background:#fff7ed; border-left:4px solid #c2410c; }
+.pitfalls b { color:#9a3412; display:block; margin-bottom:4px; }
+.pitfalls ul { margin:0; padding-left:20px; }
+.points { background:#f0fdf4; border-left:4px solid #15803d; }
+.points ul { margin:0; padding-left:20px; }
+/* resources / practice / quiz */
+h4 { margin:16px 0 8px; font-size:15px; color:var(--acc2); }
+.res table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { background:#f3f4f6; }
+td:first-child { width:40%; }
+td:nth-child(2) { width:14%; }
+.tier { display:inline-block; font-size:11px; color:#fff; padding:1px 8px; border-radius:10px; margin-left:6px; vertical-align:middle; }
+.prac ol { margin:0; padding-left:20px; }
+.quiz ul { margin:0; padding-left:20px; }
+.tips { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 20px; }
+.tips ul { margin:0; padding-left:20px; }
+/* 前置知识检查 */
+.prereq { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:10px 0; }
+.pr-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.pr-head b { font-size:15px; }
+.nec { font-size:11px; color:#fff; padding:2px 10px; border-radius:10px; }
+.nec.must { background:#b45309; }
+.nec.should { background:#0369a1; }
+.pr-row { font-size:13px; color:var(--sub); margin-top:4px; }
+.pr-label { display:inline-block; min-width:72px; color:var(--acc2); font-weight:600; }
+/* 前置补学链接（总览卡片内） */
+.pr-guide { margin-top:8px; font-size:13px; }
+.pr-guide a { font-weight:600; }
+/* 前置补学链接区（阶段页顶部） */
+.prereq-links { background:#eff6ff; border:1px solid #bfdbfe; border-left:4px solid var(--acc2); border-radius:8px; padding:10px 14px; margin:0 0 16px; font-size:14px; }
+.prereq-links b { color:var(--acc2); display:block; margin-bottom:4px; }
+.prereq-links ul { margin:0; padding-left:20px; }
+.prereq-links li { margin:2px 0; }
+/* 阶段前置依赖提示 */
+.dep-hint { background:#fffbeb; border:1px solid #fcd34d; border-left:4px solid #d97706; border-radius:8px; padding:10px 14px; margin:0 0 16px; font-size:14px; }
+/* 术语表 */
+.glossary { width:100%; border-collapse:collapse; font-size:14px; margin:8px 0; }
+.glossary th, .glossary td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+.glossary .zh { color:var(--sub); font-size:12px; }
+/* 预期输出 */
+.expected { margin:0 0 10px; }
+.expected b { display:block; color:#15803d; font-size:13px; margin-bottom:4px; }
+.expected pre { background:#0f172a; color:#e2e8f0; border-radius:6px; padding:10px 14px; font-size:13px; overflow-x:auto; }
+/* 能力自检 */
+.checklist { background:#f0fdf4; border-left:4px solid #15803d; border-radius:8px; padding:10px 14px; margin:14px 0 0; }
+.checklist h4 { margin:0 0 6px; color:#15803d; }
+.checklist ul { margin:0; padding-left:20px; }
+/* 求助路径 */
+.help { background:#fff; border:1px dashed var(--line); border-radius:8px; padding:10px 14px; margin:16px 0 0; }
+.help h4 { margin:0 0 6px; color:var(--acc2); }
+.help ul { margin:0; padding-left:20px; }
+footer { margin-top:40px; color:var(--sub); font-size:12px; border-top:1px solid var(--line); padding-top:12px; }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <span><a href="L3-动手实践-搭建完整协作应用.html">← L3 动手实践：搭建完整协作应用</a></span>
+    <span><a href="../learning-guide-2026-09-23.html">← 回总览</a></span>
+    <span></span>
+  </div>
+
+  <header>
+    <h1>L4 进阶深化：记忆、工具与工程化 · AgentScope</h1>
+    <p class="goal">🎯 学完你能做到：掌握记忆、工具调用、多模型接入与工程化调优，让应用具备记忆与行动能力，达到『熟练掌握』水平</p>
+    <p class="meta">主题：AgentScope · 生成日期：2026-09-23 · 阶段文档 5/5 · 预计 预计 6~10 小时</p>
+    <span class="stats">6 个教学小节 · 6 个延伸资源 · 6 个官方来源</span>
+  </header>
+
+  <div class="dep-hint">📌 前置要求：需先完成 L3（能独立搭建完整协作应用）。</div><div class="prereq-links"><b>📘 前置知识补学（随时可回看）</b><ul><li><a href="../prereq/python-基础-函数-类-async-await.html">Python 基础（函数、类、async/await）</a></li><li><a href="../prereq/大模型与-api-基础概念.html">大模型与 API 基础概念</a></li></ul></div>
+
+  <h2>教学内容</h2>
+  <div class="lesson"><h4>给 Agent 加上记忆：跨轮对话不健忘</h4><p>到目前为止，你创建的 Agent 每次对话都是『单次思考』：消息传给它，它回答，然后忘掉。真实应用需要 Agent 记住用户身份、偏好、之前讨论过的结论。AgentScope 用 Memory 机制解决这个问题。</p><p>官方 memory 模块提供多种记忆实现，最常用的是 TemporaryMemory（临时记忆，会话内存）和 AssistantMsgMemory。用法极简：创建记忆对象，作为 memory 参数传给 Agent 构造函数。此后 Agent 的对话历史会自动存入记忆，下一轮调用时它能看到之前的交流。</p><p>理解记忆的边界很重要：记忆默认是『会话级』的，进程结束即清空（TemporaryMemory 是内存实现）；需要持久化时要用带存储后端的记忆实现，具体以官方文档为准。给 Agent 加记忆后，你的应用从『无状态问答』升级为『有状态助手』——这是从 demo 到产品的关键一步。</p><pre><code>import os
+import asyncio
+from agentscope.agent import ReActAgent
+from agentscope.formatter import DashScopeMultiAgentFormatter
+from agentscope.memory import TemporaryMemory
+from agentscope.model import DashScopeChatModel
+
+
+async def main() -&gt; None:
+    # 1. 创建记忆：TemporaryMemory 是官方内存型记忆
+    memory = TemporaryMemory()
+
+    # 2. 把记忆注入 Agent，之后对话历史自动累积
+    agent = ReActAgent(
+        name=&quot;assistant&quot;,
+        sys_prompt=&quot;你是一个耐心的学习助手。&quot;,
+        model=DashScopeChatModel(model_name=&quot;qwen-max&quot;, api_key=os.environ[&quot;DASHSCOPE_API_KEY&quot;]),
+        formatter=DashScopeMultiAgentFormatter(),
+        memory=memory,
+    )
+
+    # 3. 两轮对话：第二轮 Agent 能回忆起第一轮的内容
+    await agent(&quot;我叫小明，正在学多智能体系统。&quot;)
+    reply = await agent(&quot;你还记得我叫什么吗？我们在学什么？&quot;)
+    print(reply.content)
+
+
+asyncio.run(main())</code></pre><div class="expected"><b>预期输出</b><pre>第二轮回复中能正确说出『小明』和『多智能体系统』——证明记忆机制生效；如果第二轮回『我不知道』，检查记忆对象是否注入</pre></div><div class="steps"><b>操作步骤</b><ol><li>运行代码，确认第二轮能回忆起第一轮的信息</li><li>把 memory 参数删掉再跑：第二轮会答不上来，直观感受『无记忆 vs 有记忆』</li><li>改用 AssistantMsgMemory 再跑一次，对比两种记忆的行为差异（以官方文档说明为准）</li></ol></div><div class="pitfalls"><b>常见坑</b><ul><li>忘了传 memory 参数：Agent 默认无记忆，跨轮对话自然不记得</li><li>误以为记忆会自动持久化：TemporaryMemory 是内存实现，进程结束即清空</li><li>多 Agent 各用各的记忆：协作场景要让下游 Agent 看到上游结论，靠消息传递而非各自记忆</li></ul></div><div class="points"><b>要点</b><ul><li>Memory 让 Agent 跨轮对话有记忆：memory=TemporaryMemory() 一行注入</li><li>记忆默认会话级、内存实现；持久化需要带存储后端的实现，以官方文档为准</li><li>协作记忆靠消息流，单 Agent 记忆靠 Memory，两者分工不同</li></ul></div></div><div class="lesson"><h4>给 Agent 工具：能查天气、能算数、能干活</h4><p>Agent 只会说话是不够的，真实任务需要它『行动』：查天气、搜资料、调用内部 API。AgentScope 的 ReActAgent 支持工具调用：你用 @tool 装饰器把任意 Python 函数声明为工具，模型在思考后会决定『调用哪个工具、传什么参数』，拿到结果再继续回答。</p><p>这是 ReAct（Reasoning+Acting）的真正威力：模型先推理，发现『要回答这个问题，我得先查数据』，于是调用工具，观察结果，再组织回答。官方 create_react_agent 教程有完整示例：定义一个 @tool 函数，把函数名传进 ReActAgent 的 tools 参数。</p><p>工具函数要写得『对模型友好』：函数名和 docstring 描述要清楚（模型靠这些决定何时调用），参数名要有意义。这是工具调用的黄金法则——工具是给模型用的 API，接口设计要以模型能理解为准。</p><pre><code>import os
+import asyncio
+from agentscope.agent import ReActAgent
+from agentscope.formatter import DashScopeMultiAgentFormatter
+from agentscope.model import DashScopeChatModel
+from agentscope.tools import tool
+
+
+# 1. 用 @tool 把普通函数声明为 Agent 可调用的工具
+@tool
+async def get_weather(city: str) -&gt; str:
+    &quot;&quot;&quot;查询指定城市的天气，参数 city 为城市名（中文）。&quot;&quot;&quot;
+    # 此处仅为演示返回固定结果；真实场景可接入天气 API
+    return f&quot;{city} 今天晴，25 度，适合学习。&quot;
+
+
+async def main() -&gt; None:
+    agent = ReActAgent(
+        name=&quot;assistant&quot;,
+        sys_prompt=&quot;你是一个能查天气的助手，需要天气信息时使用 get_weather 工具。&quot;,
+        model=DashScopeChatModel(model_name=&quot;qwen-max&quot;, api_key=os.environ[&quot;DASHSCOPE_API_KEY&quot;]),
+        formatter=DashScopeMultiAgentFormatter(),
+        tools=[get_weather],  # 2. 把工具列表传给 Agent
+    )
+
+    reply = await agent(&quot;杭州今天天气怎么样？&quot;)
+    print(reply.content)
+
+
+asyncio.run(main())</code></pre><div class="expected"><b>预期输出</b><pre>Agent 先调用 get_weather(&#x27;杭州&#x27;) 工具，再把工具返回的天气信息组织成回答打印出来——可以看到中间出现了工具调用过程</pre></div><div class="steps"><b>操作步骤</b><ol><li>运行代码，观察 Agent 是否先调用工具再回答</li><li>问一个工具无法回答的问题（如『明天呢』），观察 Agent 的应对方式</li><li>自己写一个 @tool 函数（如加法器），让 Agent 用工具算数，体会工具调用闭环</li></ol></div><div class="pitfalls"><b>常见坑</b><ul><li>忘了在 sys_prompt 里提示工具存在：模型可能不主动调用</li><li>工具 docstring 写得太含糊：模型不知道何时该调用，接口要清晰</li><li>工具函数是普通 def 却 await：@tool 支持 async 函数，调用方会 await；保持 async def 与 await 一致性</li></ul></div><div class="points"><b>要点</b><ul><li>@tool 装饰器 + tools=[...] 参数 = Agent 获得行动能力</li><li>ReAct 流程：思考 → 调用工具 → 观察结果 → 组织回答</li><li>工具即 API，函数名/docstring/参数名要按『模型能理解』的标准设计</li></ul></div></div><div class="lesson"><h4>认识 Agent Skill：设计一个技能包</h4><p>上一节你学会了给 Agent 工具（Tool），这一节学一个更高级的概念：Agent Skill（智能体技能）。Skill 是 Anthropic 提出的一套方法，用来提升 Agent 在特定任务上的表现：把一个任务的『做法』——指令、脚本、参考资源——打包成一个文件夹，用其中的 SKILL.md 文件描述怎么用。可以把它想成一本『操作手册』：手册本身不干活，但 Agent 遇到对应任务时，会先翻开手册（读 SKILL.md），再按手册里的步骤行动。</p><p>Skill 和 Tool 的关键区别要分清楚：Tool 是一个『可调用的函数』，Agent 思考后直接调用它（比如查天气）；Skill 不是工具，Agent 不能直接调用它——Agent 必须先读取 SKILL.md 里的指引，再『按照指引』使用自己已有的工具去完成任务。所以官方文档明确说：Skills are not tools，the agent cannot call a skill directly。一个 Skill 本质上是一段高质量、可复用的『做法说明书』，把提示词工程固化成可插拔的单元。</p><p>设计一个 Skill，就是设计它的文件夹。目录结构很简单：一个文件夹 + 一个 SKILL.md。官方要求 SKILL.md 必须包含 YAML frontmatter（name 和 description 两个字段，写在开头的 --- 之间）和正文指令。description 决定 Agent 什么时候选用这个技能（模型靠它判断『这个任务匹配哪个技能』），所以描述要写清楚『这个技能解决什么问题、什么时候用』；正文是给 Agent 看的操作指引，要步骤化、可执行，就像写给同事的工作交接文档。</p><p>下面用 Python 代码演示如何创建这样一个技能目录（这也是官方示例的写法）：先建文件夹，再把 SKILL.md 写进去。注意 YAML frontmatter 的格式：--- 开头、--- 结束，里面 name 和 description 各占一行。</p><pre><code>import os
+
+# 1. 创建技能目录 sample_skill
+os.makedirs(&quot;sample_skill&quot;, exist_ok=True)
+
+# 2. 写入官方要求的 SKILL.md：YAML frontmatter（name/description）+ 正文指令
+with open(&quot;sample_skill/SKILL.md&quot;, &quot;w&quot;, encoding=&quot;utf-8&quot;) as f:
+    f.write(
+        &quot;&quot;&quot;---
+name: sample_skill
+description: A sample agent skill for demonstration.
+---
+
+# Sample Skill
+
+这是一个演示技能。当用户的问题与示例相关时，遵循本文件的指引：
+1. 先向用户确认需求细节。
+2. 用简洁的中文回答，并给出示例。
+&quot;&quot;&quot;
+    )
+
+print(&quot;技能目录已创建:&quot;)
+for root, dirs, files in os.walk(&quot;sample_skill&quot;):
+    for name in files:
+        print(os.path.join(root, name))</code></pre><div class="expected"><b>预期输出</b><pre>打印一行『技能目录已创建:』和路径 sample_skill\SKILL.md —— 你的第一个技能包做好了</pre></div><div class="steps"><b>操作步骤</b><ol><li>运行代码，确认 sample_skill/SKILL.md 已创建</li><li>打开 SKILL.md，对照它的结构：--- 之间的 YAML frontmatter（name、description）+ 正文指令</li><li>把 description 改成你自己的技能描述（例如『A skill for writing meeting minutes』），体会描述如何决定 Agent 何时选用</li><li>在正文里加一条步骤，模拟扩展一个技能的做法</li></ol></div><div class="pitfalls"><b>常见坑</b><ul><li>忘记 YAML frontmatter：SKILL.md 不以 --- 开头的 name/description 开头，注册时可能解析失败或提示词里缺少技能描述</li><li>description 写得太泛：模型无法判断何时该用这个技能，技能就『永远不被选用』</li><li>把 Skill 当成 Tool 调用：Skill 不是可调用函数，Agent 是通过读取 SKILL.md 再行动，不是直接调用</li><li>正文写得太抽象：Agent 需要可执行的步骤，『好好回答』不如『先确认需求、再分三步回答』</li></ul></div><div class="points"><b>要点</b><ul><li>Agent Skill = 把任务做法打包成文件夹：SKILL.md 里是 YAML frontmatter（name/description）+ 操作指引</li><li>Skill 不是 Tool：Agent 不能直接调用 Skill，而是读 SKILL.md 后按指引行动</li><li>description 决定技能何时被选用，正文决定怎么执行——设计 Skill 就是设计这两段文本</li></ul></div></div><div class="lesson"><h4>加载与使用 Agent Skill：Toolkit 注册 + ReActAgent 集成</h4><p>设计好技能包之后，要让它真正进入 Agent 的『视野』。AgentScope 通过 Toolkit 类提供对 Agent Skills 的内置支持，相关 API 只有三个：register_agent_skill（从给定目录注册技能）、remove_agent_skill（按名称移除技能）、get_agent_skill_prompt（生成所有已注册技能的提示词文本，可附加到系统提示词）。</p><p>使用流程分三步。第一步，创建 Toolkit 实例；第二步，用 register_agent_skill 把技能目录注册进去；第三步，把 Toolkit 作为 toolkit 参数传给 ReActAgent——官方文档明确：ReActAgent 会自动把已注册技能的提示词附加到系统提示词（system prompt）里，让 Agent 知道『我有哪些技能可用、什么时候该读哪本手册』。</p><p>官方还允许你自定义提示词的排版：创建 Toolkit 时可以传 agent_skill_instruction（向 Agent 介绍技能是什么的一段开场白）和 agent_skill_template（每个技能的格式化模板，模板里必须包含 {name}、{description}、{dir} 三个占位符）。不传就用官方默认模板，先学会默认用法再自定义。</p><p>一个非常重要的前提：使用技能时，Agent 必须能读到 SKILL.md 文件的内容——所以官方文档强调，用技能的 Agent 必须配备文本文件读取工具或 shell 命令工具（这正是上一节 @tool 的用武之地）。把这两节连起来看：Skill 负责『告诉 Agent 怎么做』，Tool 负责『让 Agent 做得到』，二者配合才是完整的技能体系。</p><p>下面是官方 task_agent_skill 教程的完整写法（整理为可运行脚本）：创建技能目录 → Toolkit 注册 → 传入 ReActAgent。运行后打印 agent.sys_prompt，你会看到系统提示词里自动多了一段『# Agent Skills』，列出了已注册的技能与它的 SKILL.md 路径。</p><pre><code>import os
+import asyncio
+from agentscope.agent import ReActAgent
+from agentscope.formatter import DashScopeChatFormatter
+from agentscope.memory import InMemoryMemory
+from agentscope.model import DashScopeChatModel
+from agentscope.tool import Toolkit
+
+
+async def main() -&gt; None:
+    # 1. 准备技能目录（含 SKILL.md，见上一节）
+    os.makedirs(&quot;sample_skill&quot;, exist_ok=True)
+    with open(&quot;sample_skill/SKILL.md&quot;, &quot;w&quot;, encoding=&quot;utf-8&quot;) as f:
+        f.write(
+            &quot;&quot;&quot;---
+name: sample_skill
+description: A sample agent skill for demonstration.
+---
+
+# Sample Skill
+
+这是一个演示技能。当用户的问题与示例相关时，遵循本文件的指引。
+&quot;&quot;&quot;
+        )
+
+    # 2. 创建 Toolkit 并注册技能
+    toolkit = Toolkit()
+    toolkit.register_agent_skill(&quot;sample_skill&quot;)
+
+    # 3. 查看生成的技能提示词（可附加到系统提示词）
+    agent_skill_prompt = toolkit.get_agent_skill_prompt()
+    print(&quot;Agent Skill Prompt:&quot;)
+    print(agent_skill_prompt)
+
+    # 4. 把 Toolkit 传给 ReActAgent：技能提示词会自动进入系统提示词
+    agent = ReActAgent(
+        name=&quot;Friday&quot;,
+        sys_prompt=&quot;You are a helpful assistant named Friday.&quot;,
+        model=DashScopeChatModel(model_name=&quot;qwen-max&quot;, api_key=os.environ[&quot;DASHSCOPE_API_KEY&quot;]),
+        formatter=DashScopeChatFormatter(),
+        memory=InMemoryMemory(),
+        toolkit=toolkit,
+    )
+
+    # 5. 验证：系统提示词中已包含技能说明
+    print(&quot;\nAgent&#x27;s System Prompt with Agent Skills:&quot;)
+    print(agent.sys_prompt)
+
+    reply = await agent(&quot;你好，请用一句话介绍你自己&quot;)
+    print(&quot;\n回复:&quot;, reply.content)
+
+
+asyncio.run(main())</code></pre><div class="expected"><b>预期输出</b><pre>先打印 Toolkit 生成的技能提示词（# Agent Skills 段，含 sample_skill 与 SKILL.md 路径），再打印 Agent 的系统提示词——末尾多了一段技能说明；最后是 Agent 的正常回复</pre></div><div class="steps"><b>操作步骤</b><ol><li>运行完整脚本，对比 agent_skill_prompt 与 agent.sys_prompt 两段输出，确认技能提示词已自动附加</li><li>把 Toolkit 换成自定义模板：Toolkit(agent_skill_instruction=&#x27;&lt;system-info&gt;...&lt;/system-info&gt;\n&#x27;, agent_skill_template=&#x27;- {name}({dir}): {description}&#x27;)，再看输出格式变化</li><li>调用 toolkit.remove_agent_skill(&#x27;sample_skill&#x27;) 后重新生成提示词，观察技能消失</li><li>给这个 Agent 配一个 @tool 文本读取工具（参考上一节），体会『Skill 指引 + Tool 执行』的配合</li></ol></div><div class="pitfalls"><b>常见坑</b><ul><li>忘了把 toolkit 传给 ReActAgent：技能注册了但 Agent 的提示词里没有，Agent 根本不知道技能存在</li><li>SKILL.md 缺 frontmatter：技能描述缺失，Agent 无法判断何时选用</li><li>Agent 没有文本读取/shell 工具：Agent 知道技能存在但读不了 SKILL.md，技能形同虚设</li><li>自定义模板漏了 {name}/{description}/{dir} 占位符：格式化时会报错或输出异常</li><li>register 的路径写错：目录不存在会报错，确认相对/绝对路径正确</li></ul></div><div class="points"><b>要点</b><ul><li>三 API：register_agent_skill / remove_agent_skill / get_agent_skill_prompt，都在 Toolkit 上</li><li>ReActAgent(toolkit=toolkit) 会自动把技能提示词附加进系统提示词，无需手动拼接</li><li>技能生效的前提：Agent 配有文本读取或 shell 工具；Skill 指引方向，Tool 提供能力</li><li>自定义模板 agent_skill_instruction / agent_skill_template 可定制提示词排版，模板需含三个占位符</li></ul></div></div><div class="lesson"><h4>多模型接入：换模型只改一行</h4><p>AgentScope 的模型层是抽象化的：Agent 不直接依赖某个厂商 SDK，而是依赖 model 对象。想换模型，只需替换构造时的 model 参数。官方 model 模块提供 DashScopeChatModel（默认示例用的 qwen）、OpenAI 兼容模型、以及各类 embedding 模型（如 OpenAIEmbedding、DashScopeTextEmbedding）。</p><p>接入本地/自部署模型（如 Ollama）通常走 OpenAI 兼容协议：通过 base_url 指向本地服务地址即可，无需改业务代码。这样你可以『开发用本地小模型省钱、上线换云端大模型』，模型切换成本几乎为零。</p><p>进阶还常用 embedding 模型做『记忆的向量检索』——把消息内容转成向量，按语义相似度找回相关记忆。这一节只需知道：模型是插件化的，embedding 也是模型的一种；具体接入参数（base_url、model_name）以官方 model 教程为准。</p><pre><code>import os
+import asyncio
+from agentscope.agent import ReActAgent
+from agentscope.formatter import DashScopeMultiAgentFormatter
+from agentscope.model import DashScopeChatModel
+
+
+def build_agent(model_name: str, api_key: str) -&gt; ReActAgent:
+    &quot;&quot;&quot;把模型封装成参数，切换模型时只改调用处&quot;&quot;&quot;
+    return ReActAgent(
+        name=&quot;assistant&quot;,
+        sys_prompt=&quot;你是简洁的助手，用中文回答。&quot;,
+        model=DashScopeChatModel(model_name=model_name, api_key=api_key),
+        formatter=DashScopeMultiAgentFormatter(),
+    )
+
+
+async def main() -&gt; None:
+    # 换模型 = 换一个参数：qwen-max 换成 qwen-plus 或 qwen-turbo（更便宜更快）
+    agent = build_agent(&quot;qwen-plus&quot;, os.environ[&quot;DASHSCOPE_API_KEY&quot;])
+    reply = await agent(&quot;一句话介绍你自己用的模型&quot;)
+    print(reply.content)
+
+
+asyncio.run(main())</code></pre><div class="expected"><b>预期输出</b><pre>打印一段正常的中文回答；把 model_name 换成 qwen-turbo 再跑，回答质量与速度会有差异——体验模型切换</pre></div><div class="steps"><b>操作步骤</b><ol><li>运行代码，把 model_name 依次换成 qwen-turbo / qwen-max，感受成本与质量的取舍</li><li>阅读官方 model 教程，找到接入 OpenAI 兼容模型（含 Ollama 本地模型）的写法</li><li>了解 OpenAIEmbedding / DashScopeTextEmbedding 的用途：向量化记忆检索</li></ol></div><div class="pitfalls"><b>常见坑</b><ul><li>model_name 拼写错误：会直接报错或静默降级，以官方模型列表为准</li><li>本地模型地址写错：base_url 必须能连通，本地模型先 curl 验证再接入</li><li>误以为 embedding 和 chat 是同一个模型：用途不同，按官方文档分别配置</li></ul></div><div class="points"><b>要点</b><ul><li>模型是插件化的：换模型只改 model 参数，业务代码不动</li><li>本地模型走 OpenAI 兼容协议（base_url），开发省钱、上线换大模型</li><li>embedding 模型用于向量检索记忆，是进阶能力</li></ul></div></div><div class="lesson"><h4>工程化调优：超时、重试、并发与成本</h4><p>从 demo 到上线，工程化是必经之路。四个核心维度：</p><p>第一，超时与重试。模型调用是网络 IO，必然可能超时失败。为模型配置合理的超时时间与重试策略，避免一次慢请求卡死整条流水线；重试要有上限和退避，防止雪崩。第二，并发与限流。多 Agent 并行（fanout）能提速，但会放大对模型服务的请求压力——注意 API 配额，超限时降低并发或开启队列。第三，成本。模型按 token 计费，控制成本的关键是：选对模型档位（turbo/plus/max）、精简 sys_prompt 与上下文、避免无意义的重复调用。第四，日志与观测。把每个 Agent 的输入输出、耗时、token 用量记录下来，出问题能复盘，也能量化成本。</p><p>AgentScope 提供 AgentScope Studio 等可视化工具观察多智能体运行过程，是排查复杂协作问题的重要帮手；超时、重试等参数的配置方式以官方工程化文档为准。工程化的原则一句话：让系统在真实网络环境下『可预期地慢，而不是随机地挂』。</p><div class="steps"><b>操作步骤</b><ol><li>给模型调用配置超时时间与有限次重试（参数名称以官方文档为准）</li><li>把 fanout_pipeline 的 enable_gather 打开/关闭，观察并发对耗时与限流的影响</li><li>在代码里打印每个 Agent 的耗时，估算一次完整流水线的成本量级</li><li>浏览 AgentScope Studio 文档，了解可视化调试的入口与能力</li></ol></div><div class="pitfalls"><b>常见坑</b><ul><li>无限重试：模型持续失败时重试会放大成本与延迟，必须设上限与退避</li><li>并发无节制：API 限流（429）时先降并发，再考虑扩容</li><li>只关注功能不看成本：先跑通，再量化 token 消耗，上线前定预算</li></ul></div><div class="points"><b>要点</b><ul><li>工程四维：超时重试、并发限流、成本控制、日志观测</li><li>重试有上限有退避；并发超限先降并发；成本靠选档与精简上下文</li><li>AgentScope Studio 用于可视化调试，配置参数以官方文档为准</li></ul></div></div>
+
+  <div class="res"><h4>延伸阅读（资源）</h4><table><thead><tr><th>资源</th><th>类型</th><th>为什么看</th></tr></thead><tbody><tr><td><a href="https://doc.agentscope.io/features/memory.html" target="_blank" rel="noopener">官方文档 · Memory 记忆</a> <span class="tier" style="background:#0369a1">官方</span></td><td>docs</td><td>记忆机制的官方说明，含各记忆实现与用法</td></tr><tr><td><a href="https://doc.agentscope.io/tutorial/create_react_agent.html" target="_blank" rel="noopener">官方文档 · 创建 ReAct 智能体（含工具）</a> <span class="tier" style="background:#0369a1">官方</span></td><td>tutorial</td><td>@tool 与 tools 参数的官方完整示例</td></tr><tr><td><a href="https://doc.agentscope.io/tutorial/model.html" target="_blank" rel="noopener">官方文档 · 模型 Model</a> <span class="tier" style="background:#0369a1">官方</span></td><td>tutorial</td><td>多模型接入、OpenAI 兼容与 embedding 的权威说明</td></tr><tr><td><a href="https://doc.agentscope.io/tutorial/task_agent_skill.html" target="_blank" rel="noopener">官方文档 · Agent Skill（技能）</a> <span class="tier" style="background:#0369a1">官方</span></td><td>tutorial</td><td>Skill 设计、注册与 ReActAgent 集成的官方教程，含完整可下载源码</td></tr><tr><td><a href="https://doc.agentscope.io/features/studio.html" target="_blank" rel="noopener">官方文档 · AgentScope Studio</a> <span class="tier" style="background:#0369a1">官方</span></td><td>docs</td><td>可视化调试工具的官方文档</td></tr><tr><td><a href="https://doc.agentscope.io/faq/faq.html" target="_blank" rel="noopener">官方文档 · 工程实践与 FAQ</a> <span class="tier" style="background:#0369a1">官方</span></td><td>docs</td><td>常见错误、超时/重试等工程配置参考</td></tr></tbody></table></div>
+
+  <div class="prac"><h4>动手练习</h4><ol><li>给 L3 的『策划-写作-评审』应用里加记忆：让评审 Agent 记住上次的修改意见</li><li>写一个 @tool 工具（如查询当前时间的函数）并让 Agent 使用它回答『现在几点』</li><li>设计一个自己的技能包（如『会议纪要』技能：写 SKILL.md，含 frontmatter 与分步指引），用 Toolkit 注册并让 ReActAgent 使用它</li><li>把应用的模型从 qwen-max 换成 qwen-turbo，量化一次运行的耗时与成本差异</li><li>为应用加入超时与有限重试配置，观察模拟故障时的行为（参数以官方文档为准）</li></ol></div>
+
+  <div class="quiz"><h4>自测问题</h4><ul><li>给 Agent 加记忆最少需要改几处代码？TemporaryMemory 的记忆生命周期是什么？</li><li>@tool 装饰器的作用是什么？为什么工具的函数名与 docstring 要写清楚？</li><li>Agent Skill 和 Tool 的区别是什么？为什么说『Agent 不能直接调用 Skill』？</li><li>注册一个技能最少要几步？ReActAgent 怎么才能看到技能提示词？</li><li>换一个模型厂商需要改哪些代码？本地模型一般通过什么协议接入？</li><li>并发并行能显著提速，为什么还要小心？遇到 429 应该怎么做？</li><li>应用题：你的客服 Agent 需要『记住用户历史订单 + 查询最新物流 + 按公司话术模板回复』，分别用什么机制？</li></ul></div>
+
+  <div class="checklist"><h4>能力自检（学完你能……）</h4><ul><li>能给 Agent 注入记忆，并验证跨轮对话能回忆起之前的信息</li><li>能用 @tool 定义工具并让 Agent 自主调用</li><li>能设计一个含 YAML frontmatter 的 SKILL.md 技能包，并用 Toolkit 注册到 ReActAgent</li><li>能切换模型档位/厂商，明白成本与质量的取舍</li><li>能为应用配置超时重试与并发控制，理解限流应对策略</li></ul></div>
+
+  <div class="help"><h4>遇到问题怎么办</h4><ul><li>官方文档站（权威优先）：https://doc.agentscope.io/ —— 教程与 FAQ 页面覆盖绝大多数问题</li><li>GitHub Issues（报错求助）：https://github.com/agentscope-ai/agentscope/issues —— 搜关键词或开新 Issue，附完整报错</li><li>官方社区：GitHub Discussions https://github.com/agentscope-ai/agentscope/discussions 与官方 Discord 群</li><li>关键口诀：报错先看消息流定位到具体 Agent，再对照官方 pipeline 教程的代码逐行核对</li></ul></div>
+
+  <footer>由 knowledge-learning-path 技能生成 · 资源权威性标注：官方 = 官方文档/论文/官方示例，可靠 = 权威课程/维护者博客/技术媒体，社区 = 社区文章（供补充参考）</footer>
+</div>
+</body>
+</html>

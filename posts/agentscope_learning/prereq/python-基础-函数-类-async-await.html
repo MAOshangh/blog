@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>前置补学 · Python 基础（函数、类、async/await）</title>
+<style>
+/* knowledge-learning-path 共享样式 */
+:root { --ink:#1f2937; --sub:#6b7280; --line:#e5e7eb; --bg:#f9fafb; --acc:#0f766e; --acc2:#0369a1; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif; color:var(--ink); background:var(--bg); line-height:1.75; }
+.wrap { max-width:960px; margin:0 auto; padding:32px 20px 64px; }
+header { border-bottom:2px solid var(--line); padding-bottom:20px; margin-bottom:24px; }
+h1 { font-size:28px; margin:0 0 8px; }
+.goal { color:var(--acc); font-weight:600; margin:0 0 4px; }
+.meta { color:var(--sub); font-size:13px; }
+.stats { display:inline-block; margin-top:10px; padding:4px 12px; background:#eef2f2; border-radius:20px; color:var(--acc2); font-size:13px; }
+h2 { font-size:22px; margin:36px 0 12px; }
+.summary { color:var(--sub); }
+a { color:var(--acc2); text-decoration:none; }
+a:hover { text-decoration:underline; }
+/* 导航条 */
+.nav { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:0 0 20px; padding:10px 14px; background:#fff; border:1px solid var(--line); border-radius:10px; font-size:14px; }
+.nav a { font-weight:600; }
+.nav .spacer { color:var(--sub); }
+/* 知识地图 */
+.map-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+.map-item { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+.map-item b { display:block; color:var(--acc2); margin-bottom:4px; }
+.map-item span { font-size:13px; color:var(--sub); }
+/* 阶段导航卡片（总览页） */
+.phase-cards { display:grid; gap:12px; }
+.phase-card { display:block; background:#fff; border:1px solid var(--line); border-left:4px solid var(--acc); border-radius:10px; padding:14px 16px; color:var(--ink); }
+.phase-card:hover { border-color:var(--acc2); text-decoration:none; }
+.phase-card .pc-head { display:flex; align-items:center; gap:10px; }
+.phase-card .lvl { background:var(--acc); color:#fff; font-weight:700; font-size:13px; padding:4px 8px; border-radius:6px; }
+.phase-card h3 { margin:0; font-size:16px; }
+.phase-card .dur { margin-left:auto; color:var(--sub); font-size:12px; white-space:nowrap; }
+.phase-card p { margin:6px 0 0; font-size:13px; color:var(--sub); }
+/* 阶段页 */
+.phase-head { display:flex; align-items:flex-start; gap:12px; border-bottom:1px dashed var(--line); padding-bottom:12px; margin-bottom:16px; }
+.phase-head .lvl { flex-shrink:0; background:var(--acc); color:#fff; font-weight:700; font-size:14px; padding:6px 10px; border-radius:8px; }
+.phase-head h3 { margin:0; font-size:18px; }
+.phase-head .obj { margin:4px 0 0; color:var(--ink); }
+.phase-head .dur { margin-left:auto; flex-shrink:0; color:var(--sub); font-size:13px; white-space:nowrap; }
+/* lessons */
+.lesson { border:1px solid var(--line); border-radius:10px; margin:14px 0; padding:16px 18px; background:#fcfdfd; }
+.lesson h4 { margin:0 0 10px; font-size:16px; color:var(--acc2); }
+.lesson p { margin:0 0 10px; }
+.lesson p:last-child { margin-bottom:0; }
+pre { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; overflow-x:auto; font-size:13px; line-height:1.6; margin:10px 0; }
+pre code { font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace; }
+.steps, .pitfalls, .points { margin:10px 0 0; padding:10px 14px; border-radius:8px; }
+.steps { background:#eff6ff; border-left:4px solid var(--acc2); }
+.steps b, .points b { color:var(--acc2); display:block; margin-bottom:4px; }
+.steps ol { margin:0; padding-left:20px; }
+.pitfalls { background:#fff7ed; border-left:4px solid #c2410c; }
+.pitfalls b { color:#9a3412; display:block; margin-bottom:4px; }
+.pitfalls ul { margin:0; padding-left:20px; }
+.points { background:#f0fdf4; border-left:4px solid #15803d; }
+.points ul { margin:0; padding-left:20px; }
+/* resources / practice / quiz */
+h4 { margin:16px 0 8px; font-size:15px; color:var(--acc2); }
+.res table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { background:#f3f4f6; }
+td:first-child { width:40%; }
+td:nth-child(2) { width:14%; }
+.tier { display:inline-block; font-size:11px; color:#fff; padding:1px 8px; border-radius:10px; margin-left:6px; vertical-align:middle; }
+.prac ol { margin:0; padding-left:20px; }
+.quiz ul { margin:0; padding-left:20px; }
+.tips { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 20px; }
+.tips ul { margin:0; padding-left:20px; }
+/* 前置知识检查 */
+.prereq { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:10px 0; }
+.pr-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.pr-head b { font-size:15px; }
+.nec { font-size:11px; color:#fff; padding:2px 10px; border-radius:10px; }
+.nec.must { background:#b45309; }
+.nec.should { background:#0369a1; }
+.pr-row { font-size:13px; color:var(--sub); margin-top:4px; }
+.pr-label { display:inline-block; min-width:72px; color:var(--acc2); font-weight:600; }
+/* 前置补学链接（总览卡片内） */
+.pr-guide { margin-top:8px; font-size:13px; }
+.pr-guide a { font-weight:600; }
+/* 前置补学链接区（阶段页顶部） */
+.prereq-links { background:#eff6ff; border:1px solid #bfdbfe; border-left:4px solid var(--acc2); border-radius:8px; padding:10px 14px; margin:0 0 16px; font-size:14px; }
+.prereq-links b { color:var(--acc2); display:block; margin-bottom:4px; }
+.prereq-links ul { margin:0; padding-left:20px; }
+.prereq-links li { margin:2px 0; }
+/* 阶段前置依赖提示 */
+.dep-hint { background:#fffbeb; border:1px solid #fcd34d; border-left:4px solid #d97706; border-radius:8px; padding:10px 14px; margin:0 0 16px; font-size:14px; }
+/* 术语表 */
+.glossary { width:100%; border-collapse:collapse; font-size:14px; margin:8px 0; }
+.glossary th, .glossary td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+.glossary .zh { color:var(--sub); font-size:12px; }
+/* 预期输出 */
+.expected { margin:0 0 10px; }
+.expected b { display:block; color:#15803d; font-size:13px; margin-bottom:4px; }
+.expected pre { background:#0f172a; color:#e2e8f0; border-radius:6px; padding:10px 14px; font-size:13px; overflow-x:auto; }
+/* 能力自检 */
+.checklist { background:#f0fdf4; border-left:4px solid #15803d; border-radius:8px; padding:10px 14px; margin:14px 0 0; }
+.checklist h4 { margin:0 0 6px; color:#15803d; }
+.checklist ul { margin:0; padding-left:20px; }
+/* 求助路径 */
+.help { background:#fff; border:1px dashed var(--line); border-radius:8px; padding:10px 14px; margin:16px 0 0; }
+.help h4 { margin:0 0 6px; color:var(--acc2); }
+.help ul { margin:0; padding-left:20px; }
+footer { margin-top:40px; color:var(--sub); font-size:12px; border-top:1px solid var(--line); padding-top:12px; }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="nav">
+    <span><a href="../learning-guide-2026-09-23.html">← 回教程总览</a></span>
+  </div>
+
+  <header>
+    <h1>前置补学 · Python 基础（函数、类、async/await）</h1>
+    <p class="goal">🎯 补学目标：用 3 个短小节补齐 AgentScope 教程需要的 Python 基础：函数、类、async/await。学完能读懂本教程中的 Python 代码。预计 1~2 小时。</p>
+    <p class="meta">所属教程：AgentScope · 生成日期：2026-09-23 · 本页为前置知识补学 mini 教程，学完即可回到主教程继续</p>
+  </header>
+
+  <h2>补学内容</h2>
+  <div class="lesson"><h4>函数与返回值</h4><p>函数是把一段可以重复使用的代码打包起来，给它取个名字。写代码时，你会反复做同一件事（比如把文本拼起来、计算价格），每次都复制粘贴很麻烦，函数就是解决这个的：定义一次，处处调用。可以把函数想象成一台『豆浆机』：你投入豆子（参数），它输出豆浆（返回值）。</p><p>Python 里用 <code>def</code> 定义函数：<code>def 函数名(参数):</code> 下面是函数体。函数体最后用 <code>return</code> 把结果交出来。调用时写 <code>函数名(参数)</code> 就能拿到返回值。AgentScope 教程里你写的 <code>sys_prompt</code>、<code>name</code> 等大多是传给 Agent 的字符串参数，理解函数的参数与返回值，就能看懂这些调用。</p><pre><code>def greet(name):
+    return &quot;你好，&quot; + name + &quot;！&quot;
+
+msg = greet(&quot;小明&quot;)
+print(msg)</code></pre><div class="expected"><b>预期输出</b><pre>你好，小明！</pre></div><div class="steps"><b>操作步骤</b><ol><li>用 def 定义函数 greet，接收一个参数 name</li><li>函数体里用 return 返回拼好的字符串</li><li>调用 greet(&quot;小明&quot;) 并把结果打印出来</li></ol></div><div class="points"><b>要点</b><ul><li>函数 = 打包可复用代码，def 定义、return 返回</li><li>调用时括号里传参数，得到返回值</li><li>AgentScope 里大量 API 都是『传参数、拿结果』的形式</li></ul></div></div><div class="lesson"><h4>类与对象</h4><p>类（class）是把『数据 + 操作这些数据的方法』打包在一起的结构。可以把它想成一张设计图纸：图纸本身不是房子，但按图纸能造出很多房子（对象）。比如一个 Agent 有名字、有系统提示词（数据），有『回复消息』的能力（方法），在 AgentScope 里 Agent 就是一个类，你用类创建一个个具体的智能体实例。</p><p>定义类用 <code>class 类名:</code>，类里用 <code>def __init__(self, ...)</code> 定义初始化方法（self 指实例自己），普通方法也写在类里。创建实例用 <code>类名(参数)</code>。教程中 <code>ReActAgent(...)</code> 就是创建 Agent 实例的过程，理解类与实例的关系后，你就知道每个 Agent 各自拥有独立的状态。</p><pre><code>class Robot:
+    def __init__(self, name):
+        self.name = name
+
+    def say_hi(self):
+        return &quot;我是 &quot; + self.name
+
+r = Robot(&quot;小助手&quot;)
+print(r.say_hi())</code></pre><div class="expected"><b>预期输出</b><pre>我是 小助手</pre></div><div class="steps"><b>操作步骤</b><ol><li>用 class 定义 Robot 类，__init__ 里保存 name</li><li>定义 say_hi 方法返回自我介绍</li><li>创建实例 r = Robot(&quot;小助手&quot;) 并调用方法</li></ol></div><div class="points"><b>要点</b><ul><li>类 = 图纸，对象 = 按图纸造出的实例</li><li>self.name 是实例自己的数据，各实例互不干扰</li><li>AgentScope 中 ReActAgent 就是类，教程代码在创建实例</li></ul></div></div><div class="lesson"><h4>async/await 与 asyncio.run</h4><p>异步（async）让程序在等待时（比如等模型返回）先去干别的，而不是傻等。可以把它想成点外卖：你下单后不会一直盯着手机发呆，而是边做别的事边等外卖。Python 用 <code>async def</code> 定义『协程』（可暂停的函数），用 <code>await</code> 暂停等待某个异步操作完成，最后用 <code>asyncio.run()</code> 启动整个异步程序。</p><p>AgentScope 的 Agent 调用是异步的：<code>await agent(...)</code> 这样的写法意味着『调用 Agent 并等它回复』。初学者最常犯的错是忘写 <code>await</code>（报错说 coroutine 未被等待），或忘了用 <code>asyncio.run()</code> 启动（直接调用协程不会执行）。记住一个模板：入口函数写成 <code>async def main(): ...</code>，最后 <code>asyncio.run(main())</code>。</p><pre><code>import asyncio
+
+async def say_hello():
+    print(&quot;开始&quot;)
+    await asyncio.sleep(1)   # 模拟等待
+    print(&quot;结束&quot;)
+
+asyncio.run(say_hello())</code></pre><div class="expected"><b>预期输出</b><pre>开始
+（停顿 1 秒）
+结束</pre></div><div class="steps"><b>操作步骤</b><ol><li>用 async def 定义协程函数</li><li>函数内用 await 等待异步操作（示例用 asyncio.sleep 模拟）</li><li>用 asyncio.run() 启动协程</li></ol></div><div class="pitfalls"><b>常见坑</b><ul><li>调用 async 函数但不 await：报 TypeError 提示 coroutine 未等待</li><li>忘了 asyncio.run()：协程只创建不执行，看不到任何输出</li><li>在同步函数里直接 await：语法错误，async 只能在 async 函数内</li></ul></div><div class="points"><b>要点</b><ul><li>async def 定义可暂停函数，await 暂停等待</li><li>asyncio.run(入口()) 启动异步程序，是固定模板</li><li>AgentScope 的 Agent 调用要 await，教程代码以此为准</li></ul></div></div>
+
+  <div class="checklist" style="margin-top:16px"><h4>补学完成标准</h4><ul><li>能对照主教程「开始前检查」中对应项的自检标准逐条确认达标</li><li>达标后回到主教程总览页，从 L0 开始学习</li></ul></div>
+
+  <footer>由 knowledge-learning-path 技能生成 · 前置知识补学 · 内容以权威资料为准，具体 API/命令以官方文档最新版本为准</footer>
+</div>
+</body>
+</html>
